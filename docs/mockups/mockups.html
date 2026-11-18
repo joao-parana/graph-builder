@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Graph Builder — Mockups (SPEC §8)</title>
+<style>
+:root{
+  --paper:#F3EEE4; --paper2:#FBF8F2; --ink:#1E1B16; --muted:#6B6457; --line:#D9D1C2;
+  --in:#B08A2E; --wk:#1F3A5F; --sv:#8B2323; --dl:#2F5D3A; --dc:#5B3A7A; --mm:#3E4C59;
+  --mono: ui-monospace,"SF Mono",Menlo,monospace; --serif: Georgia,"Times New Roman",serif;
+  --sans: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+}
+*{box-sizing:border-box} body{margin:0;background:#E6E0D4;font-family:var(--sans);color:var(--ink)}
+.page-nav{position:sticky;top:0;z-index:10;background:var(--ink);color:#fff;padding:10px 24px;display:flex;gap:16px;flex-wrap:wrap;font-size:13px}
+.page-nav a{color:#E9DFC9;text-decoration:none} .page-nav b{margin-right:12px}
+section.screen{padding:28px 24px 8px} section.screen>h2{font-family:var(--serif);font-weight:normal;margin:0 0 4px}
+section.screen>p.note{margin:0 0 14px;color:var(--muted);font-size:13px}
+.frame{background:var(--paper);border:1px solid #BDB4A3;border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,.12);overflow:hidden;width:1280px;max-width:100%}
+.label{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+/* top bar */
+.top{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--paper2)}
+.brand{font-family:var(--serif);font-size:20px} .brand small{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--muted);margin-left:10px;text-transform:uppercase}
+.title{flex:1;text-align:center;font-weight:500} .title .saved{font-size:11px;color:var(--dl);margin-left:8px}
+.btn{border:1px solid var(--line);background:#fff;border-radius:6px;padding:6px 12px;font-size:13px;font-family:var(--sans);cursor:default}
+.btn.primary{background:var(--ink);color:#fff;border-color:var(--ink)} .btn.danger{color:var(--sv)} .btn[disabled]{opacity:.4}
+/* layout */
+.body{display:grid;grid-template-columns:230px 1fr 300px;height:700px}
+.palette{border-right:1px solid var(--line);padding:12px;overflow:hidden;background:var(--paper2)}
+.pcard{background:#fff;border:1px solid var(--line);border-left:4px solid var(--c);border-radius:6px;padding:8px 10px;margin:6px 0 10px}
+.pcard b{font-size:14px} .pcard div{font-size:11.5px;color:var(--muted);line-height:1.35;margin-top:2px}
+.canvas{position:relative;background-color:var(--paper);background-image:radial-gradient(#CFC6B5 1px,transparent 1px);background-size:16px 16px;overflow:hidden}
+.inspector{border-left:1px solid var(--line);padding:14px;background:var(--paper2);overflow:hidden;font-size:13px}
+/* nodes */
+.node{position:absolute;width:190px;background:#fff;border:1px solid var(--line);border-top:4px solid var(--c);border-radius:5px;padding:8px 10px;box-shadow:0 2px 6px rgba(0,0,0,.06)}
+.node .k{font-family:var(--mono);font-size:9px;letter-spacing:.14em;color:var(--c);text-transform:uppercase}
+.node .n{font-weight:600;font-size:13px;margin:2px 0}
+.node .i{font-size:11px;color:var(--muted);font-style:italic;line-height:1.3}
+.node.sel{outline:2px solid var(--c);outline-offset:2px}
+.node.warn{box-shadow:0 0 0 2px #E2B04A}
+.h{position:absolute;top:50%;width:11px;height:11px;margin-top:-5px;border:1.5px solid var(--ink);border-radius:50%;background:#fff}
+.h.l{left:-6px} .h.r{right:-6px} .h.t{top:-6px;left:50%;margin-left:-5px;margin-top:0;border-color:#B08A2E;background:#D7B65A;width:9px;height:9px}
+svg.wires{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.badge{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:#fff;background:var(--c);border-radius:20px;padding:3px 10px;text-transform:uppercase}
+.field{margin:12px 0} .field input,.field textarea,.field select{width:100%;border:1px solid var(--line);border-radius:6px;padding:7px 9px;font:13px var(--sans);background:#fff;margin-top:4px}
+.field textarea{min-height:110px;resize:vertical;line-height:1.4}
+.help{font-size:12px;color:var(--muted);line-height:1.4}
+.quick{border-left:3px solid var(--sv);padding:8px 10px;background:#fff;border-radius:0 6px 6px 0;margin-top:10px}
+.preset{border:1px solid var(--line);border-radius:6px;padding:6px 9px;margin-top:6px;background:var(--paper2)}
+.preset.on{border-color:var(--sv);background:#F7EAEA} .preset b{font-size:12.5px} .preset div{font-size:11px;color:var(--muted)}
+.row{display:flex;gap:8px} .row>*{flex:1}
+.rel{font-size:12px;margin-top:10px;color:var(--muted)} .rel a{color:var(--wk);text-decoration:underline}
+.chip{display:inline-block;background:#fff;border:1px solid var(--line);border-radius:14px;padding:2px 9px;font-size:12px;margin:3px 3px 0 0;font-family:var(--mono)}
+/* canvas widgets */
+.zoombar{position:absolute;left:14px;bottom:12px;background:#fff;border:1px solid var(--line);border-radius:8px;display:flex;gap:2px;padding:4px;font-size:12px}
+.zoombar span{padding:4px 9px;border-radius:5px} .zoombar span.v{font-family:var(--mono);color:var(--muted)}
+.prexp{position:absolute;right:14px;bottom:12px;width:330px;background:#fff;border:1px solid var(--line);border-left:4px solid var(--sv);border-radius:6px;padding:10px 12px;font-size:12px}
+.prexp ul{margin:6px 0 0;padding-left:16px;line-height:1.55} .prexp li.err{color:var(--sv)} .prexp li.more{color:var(--muted);list-style:none;margin-left:-16px}
+/* panels grid */
+.panels{display:grid;grid-template-columns:repeat(4,300px);gap:18px}
+.panel{background:var(--paper2);border:1px solid #BDB4A3;border-radius:10px;padding:14px;font-size:13px;box-shadow:0 6px 24px rgba(0,0,0,.1)}
+.panel h3{margin:0 0 10px;font-family:var(--mono);font-size:11px;letter-spacing:.12em;color:var(--muted);font-weight:normal}
+/* modal */
+.modal-wrap{width:1280px;max-width:100%;height:560px;background:rgba(30,27,22,.45);border-radius:10px;display:flex;align-items:center;justify-content:center}
+.modal{background:var(--paper2);width:820px;border-radius:10px;box-shadow:0 20px 50px rgba(0,0,0,.3);overflow:hidden}
+.modal header{display:flex;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line)} .modal header h3{flex:1;margin:0;font-family:var(--serif);font-weight:normal;font-size:20px}
+.tabs{display:flex;gap:2px;padding:0 18px;border-bottom:1px solid var(--line)} .tabs span{padding:9px 14px;font-size:13px;color:var(--muted)} .tabs span.on{color:var(--ink);border-bottom:2px solid var(--ink)}
+.modal .content{padding:16px 18px} .modal footer{display:flex;gap:8px;justify-content:flex-end;padding:12px 18px;border-top:1px solid var(--line)}
+pre.code{background:#1E1B16;color:#EDE6D6;border-radius:8px;padding:12px 14px;font:12px/1.5 var(--mono);height:300px;overflow:hidden;margin:0;white-space:pre-wrap}
+table.list{width:100%;border-collapse:collapse;font-size:13px} table.list th{text-align:left;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;color:var(--muted);font-weight:normal;padding:6px 8px;border-bottom:1px solid var(--line)}
+table.list td{padding:9px 8px;border-bottom:1px solid var(--line)} table.list tr.cur td{background:#fff}
+.errbox{border:1px solid #E3BDBD;background:#FBF0F0;border-radius:6px;padding:10px 12px;font-size:12.5px;color:var(--sv);margin-top:10px}
+.errbox code{font-family:var(--mono);background:#fff;padding:1px 5px;border-radius:4px}
+.drop{border:2px dashed var(--line);border-radius:8px;padding:22px;text-align:center;color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+<nav class="page-nav"><b>Graph Builder · Mockups</b>
+  <a href="#m1">M1 Editor</a><a href="#m2">M2–M5 Inspetores</a><a href="#m6">M6 Exportar</a><a href="#m7">M7 Meus grafos</a><a href="#m8">M8 Abrir JSON</a>
+</nav>
+
+<!-- ================= M1 ================= -->
+<section class="screen" id="m1">
+  <h2>M1 — Editor (sem seleção: inspetor do Grafo)</h2>
+  <p class="note">FR-01..07, FR-10, FR-20. Fio tracejado vermelho = retorno implícito do Supervisor (§3.3). Fio pontilhado cinza = Memória.</p>
+  <div class="frame">
+    <div class="top">
+      <span class="brand">◇ Graph Builder<small>grafos de agentes</small></span>
+      <span class="title">Landing page do produto X <span class="saved">● salvo</span></span>
+      <button class="btn">?</button><button class="btn">Meus grafos</button><button class="btn">Abrir JSON</button><button class="btn">Limpar</button><button class="btn primary">Exportar para a IA</button>
+    </div>
+    <div class="body">
+      <aside class="palette">
+        <div class="label">Peças</div>
+        <div class="pcard" style="--c:var(--in)"><b>Entrada</b><div>Opcional: o insumo que você cola na hora de rodar. Uma por grafo.</div></div>
+        <div class="pcard" style="--c:var(--wk)"><b>Trabalhador</b><div>Executa uma parte do trabalho. É quem constrói.</div></div>
+        <div class="pcard" style="--c:var(--sv)"><b>Supervisor</b><div>Crítico cego: julga o que chegou e devolve para refazer.</div></div>
+        <div class="pcard" style="--c:var(--dl)"><b>Entrega</b><div>Junta vários laços num artefato só.</div></div>
+        <div class="label" style="margin-top:14px">Estrutura</div>
+        <div class="pcard" style="--c:var(--dc)"><b>Decisão</b><div>Escolhe UM caminho. Cada fio leva uma condição.</div></div>
+        <div class="pcard" style="--c:var(--mm)"><b>Memória</b><div>Quadro compartilhado com relações nomeadas.</div></div>
+        <div class="label" style="margin-top:14px">Atalhos</div>
+        <div class="help">Del apaga · ⌘D duplica · ⌘Z desfaz · clique no fio para cortar</div>
+      </aside>
+
+      <main class="canvas">
+        <svg class="wires" viewBox="0 0 750 700" preserveAspectRatio="none">
+          <g fill="none" stroke="#3B342A" stroke-width="1.6">
+            <path d="M206 120 C 240 120, 240 120, 270 120"/>
+            <path d="M466 120 C 500 120, 500 260, 530 260"/>
+            <path d="M206 120 C 240 120, 230 300, 270 300"/>
+            <path d="M466 300 C 500 300, 500 270, 530 270"/>
+            <path d="M726 266 C 800 266, 450 485, 536 485"/>
+          </g>
+          <!-- return loops -->
+          <g fill="none" stroke="#8B2323" stroke-width="1.4" stroke-dasharray="5 4">
+            <path d="M628 222 C 628 160, 370 40, 368 84"/>
+            <path d="M628 222 C 628 190, 368 220, 368 264"/>
+          </g>
+          <!-- memory -->
+          <g fill="none" stroke="#7D8794" stroke-width="1.3" stroke-dasharray="2 4">
+            <path d="M466 128 C 540 420, 20 611, 70 611"/>
+          </g>
+        </svg>
+        <div class="node" style="--c:var(--in);left:16px;top:84px"><span class="h r"></span><div class="k">Entrada</div><div class="n">Briefing</div><div class="i">Cole aqui o briefing do produto.</div></div>
+        <div class="node" style="--c:var(--wk);left:276px;top:84px"><span class="h t"></span><span class="h l"></span><span class="h r"></span><div class="k">Trabalhador</div><div class="n">Redator de headlines</div><div class="i">Escreva 5 headlines para o público…</div></div>
+        <div class="node warn" style="--c:var(--wk);left:276px;top:264px"><span class="h t"></span><span class="h l"></span><span class="h r"></span><div class="k">Trabalhador</div><div class="n">Trabalhador 2</div><div class="i">Sem instruções ainda — clique para escrever.</div></div>
+        <div class="node" style="--c:var(--sv);left:536px;top:222px"><span class="h l"></span><span class="h r"></span><div class="k">Supervisor</div><div class="n">Crítico de headline</div><div class="i">Reprove se não citar o público…</div></div>
+        <div class="node" style="--c:var(--dl);left:536px;top:440px"><span class="h t"></span><span class="h l"></span><span class="h r"></span><div class="k">Entrega</div><div class="n">Entrega 1</div><div class="i">Headline final + 1º parágrafo.</div></div>
+        <div class="node" style="--c:var(--mm);left:76px;top:566px"><span class="h l"></span><span class="h r"></span><div class="k">Memória</div><div class="n">Ideias</div><div class="i">ideia · descartada_por</div></div>
+
+        <div class="zoombar"><span>−</span><span class="v">90%</span><span>+</span><span>Enquadrar</span><span>Arrumar</span><span>Foco</span></div>
+        <div class="prexp"><div class="label" style="color:var(--sv)">Antes de exportar</div>
+          <ul><li>"Trabalhador 2" está sem instruções.</li><li>"Ideias" ninguém consulta.</li></ul>
+        </div>
+      </main>
+
+      <aside class="inspector">
+        <span class="badge" style="--c:var(--ink)">Grafo</span>
+        <div class="field"><span class="label">Nome do grafo</span><input value="Landing page do produto X"></div>
+        <div class="field"><span class="label">Objetivo</span><textarea>Entregar a headline e o primeiro parágrafo da landing page do produto X, aprovados por um crítico cego.</textarea></div>
+        <div class="help">O objetivo abre o prompt exportado. Sem ele, a exportação fica bloqueada.</div>
+        <div class="field"><span class="label">Resumo</span>
+          <div style="margin-top:6px;line-height:1.7">1 Entrada · 2 Trabalhadores · 1 Supervisor<br>1 Entrega · 0 Decisões · 1 Memória<br><span style="color:var(--muted)">6 fios · 2 laços de retorno</span></div>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<!-- ================= M2–M5 ================= -->
+<section class="screen" id="m2">
+  <h2>M2–M5 — Inspetores por tipo de peça</h2>
+  <p class="note">FR-11..14. Mesmo painel direito do M1, trocando conforme a peça selecionada.</p>
+  <div class="panels">
+    <div class="panel"><h3>M2 · TRABALHADOR</h3>
+      <div style="display:flex;justify-content:space-between"><span class="badge" style="--c:var(--wk)">Trabalhador</span><button class="btn danger">Apagar</button></div>
+      <div class="field"><span class="label">Nome da peça</span><input value="Redator de headlines"></div>
+      <div class="field"><span class="label">Instruções</span><textarea>Escreva 5 headlines para o público definido no briefing. Cada uma com no máximo 10 palavras e uma promessa concreta.</textarea></div>
+      <div class="help">Quem constrói. Recebe o insumo e produz um artefato.</div>
+      <div class="rel">Recebe de: <a>Briefing</a><br>Envia para: <a>Crítico de headline</a><br>Escreve em: <a>Ideias</a> <span class="chip">ideia</span></div>
+    </div>
+
+    <div class="panel"><h3>M3 · SUPERVISOR</h3>
+      <div style="display:flex;justify-content:space-between"><span class="badge" style="--c:var(--sv)">Supervisor</span><button class="btn danger">Apagar</button></div>
+      <div class="field"><span class="label">Nome da peça</span><input value="Crítico de headline"></div>
+      <div class="field"><span class="label">Instruções (a barra)</span><textarea>Reprove se a headline não citar o público, se faltar prova concreta ou se houver promessa vaga.
+Todo crítico aprova com reação "uau".</textarea></div>
+      <div class="help">Crítico cego: recebe só o artefato, nunca o raciocínio de quem construiu.</div>
+      <div class="quick"><div class="label" style="color:var(--sv)">Preencher rápido — a barra</div>
+        <div class="preset on"><b>Resultado WOW</b><div>todo crítico aprova com reação "uau"</div></div>
+        <div class="preset"><b>Sem erros</b><div>roda limpo, borda e erro forçados</div></div>
+        <div class="preset"><b>Evidência concreta</b><div>toda afirmação tem prova</div></div>
+      </div>
+      <div class="row"><div class="field"><span class="label">Rodadas máx.</span><input value="3"></div>
+        <div class="field"><span class="label">Se esgotar</span><select><option>Entregar o melhor com ressalvas</option></select></div></div>
+      <div class="rel">Julga o que vem de: <a>Redator de headlines</a>, <a>Trabalhador 2</a><br>Aprovado → <a>Entrega 1</a></div>
+    </div>
+
+    <div class="panel"><h3>M4 · DECISÃO</h3>
+      <div style="display:flex;justify-content:space-between"><span class="badge" style="--c:var(--dc)">Decisão</span><button class="btn danger">Apagar</button></div>
+      <div class="field"><span class="label">Nome da peça</span><input value="Quantas aprovadas?"></div>
+      <div class="field"><span class="label">Instruções</span><textarea style="min-height:60px">Olhe as headlines aprovadas e escolha um caminho.</textarea></div>
+      <div class="label" style="margin-top:6px">Caminhos (escolhe UM)</div>
+      <div class="field" style="margin-top:6px"><span class="help">→ Trabalhador 2</span><input value="há mais de uma headline aprovada"></div>
+      <div class="field" style="margin-top:6px"><span class="help">→ Entrega 1</span><input value="" placeholder="Escreva a condição deste caminho" style="border-color:var(--sv)"></div>
+      <div class="errbox" style="margin-top:4px">Este fio precisa de uma condição escrita.</div>
+    </div>
+
+    <div class="panel"><h3>M5 · MEMÓRIA</h3>
+      <div style="display:flex;justify-content:space-between"><span class="badge" style="--c:var(--mm)">Memória</span><button class="btn danger">Apagar</button></div>
+      <div class="field"><span class="label">Nome da peça</span><input value="Ideias"></div>
+      <div class="field"><span class="label">Instruções</span><textarea style="min-height:70px">Guarde cada headline proposta e, quando descartada, o motivo.</textarea></div>
+      <div class="field"><span class="label">Relações</span><div><span class="chip">ideia</span><span class="chip">descartada_por</span><span class="chip" style="color:var(--muted)">+ adicionar</span></div></div>
+      <div class="rel">Quem escreve: <a>Redator de headlines</a><br>Quem consulta: <span style="color:var(--sv)">ninguém ainda</span></div>
+      <div class="help" style="margin-top:10px">Fio de uma peça <b>para</b> a Memória = ela escreve. Fio <b>da</b> Memória para uma peça = ela consulta.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= M6 ================= -->
+<section class="screen" id="m6">
+  <h2>M6 — Exportar para a IA</h2>
+  <p class="note">FR-21. Aba Prompt ativa; com erros, a área mostra a lista e Copiar/Baixar ficam desabilitados.</p>
+  <div class="modal-wrap"><div class="modal">
+    <header><h3>Exportar para a IA</h3><button class="btn">✕</button></header>
+    <div class="tabs"><span class="on">Prompt (.md)</span><span>JSON</span></div>
+    <div class="content">
+<pre class="code"># Grafo: Landing page do produto X
+
+## Objetivo
+Entregar a headline e o primeiro parágrafo da landing page do produto X, aprovados por um crítico cego.
+
+## Como executar
+Execute as etapas na ordem abaixo. Cada Supervisor é um **crítico cego**: passe a ele
+apenas o artefato, nunca o raciocínio de quem o construiu. Se reprovar, devolva ao(s)
+construtor(es) e repita até 3 rodadas; esgotadas, siga com o melhor e anote as ressalvas.
+
+## Entrada
+Cole aqui o briefing do produto. → alimenta: Redator de headlines, Trabalhador 2
+
+## Etapas
+### 1. Redator de headlines (Trabalhador)
+Instruções: Escreva 5 headlines para o público definido no briefing…
+Envia para: Crítico de headline · Escreve em: Ideias (relação `ideia`)
+
+### 2. Trabalhador 2 (Trabalhador)
+_(sem instruções)_
+…</pre>
+      <div class="help" style="margin-top:8px">2 alertas não bloqueiam a exportação · determinístico: o mesmo grafo gera sempre o mesmo texto.</div>
+    </div>
+    <footer><button class="btn">Baixar .md</button><button class="btn primary">Copiar prompt</button></footer>
+  </div></div>
+</section>
+
+<!-- ================= M7 ================= -->
+<section class="screen" id="m7">
+  <h2>M7 — Meus grafos</h2>
+  <p class="note">FR-31. Persistência local (IndexedDB). Linha destacada = grafo aberto.</p>
+  <div class="modal-wrap"><div class="modal">
+    <header><h3>Meus grafos</h3><button class="btn primary" style="margin-right:8px">+ Novo grafo</button><button class="btn">✕</button></header>
+    <div class="content">
+      <table class="list">
+        <tr><th>Nome</th><th>Peças</th><th>Atualizado</th><th></th></tr>
+        <tr class="cur"><td><b>Landing page do produto X</b></td><td>6</td><td>hoje, 08:52</td><td style="text-align:right"><button class="btn">Abrir</button> <button class="btn">Renomear</button> <button class="btn">Duplicar</button> <button class="btn danger">Apagar</button></td></tr>
+        <tr><td>Triagem de alertas secwatch</td><td>11</td><td>ontem, 17:10</td><td style="text-align:right"><button class="btn">Abrir</button> <button class="btn">Renomear</button> <button class="btn">Duplicar</button> <button class="btn danger">Apagar</button></td></tr>
+        <tr><td>Revisão de PR com crítico cego</td><td>5</td><td>10/11/2026</td><td style="text-align:right"><button class="btn">Abrir</button> <button class="btn">Renomear</button> <button class="btn">Duplicar</button> <button class="btn danger">Apagar</button></td></tr>
+      </table>
+    </div>
+  </div></div>
+</section>
+
+<!-- ================= M8 ================= -->
+<section class="screen" id="m8">
+  <h2>M8 — Abrir JSON (erro de validação)</h2>
+  <p class="note">FR-22. Erros do schema (zod) mostram o caminho do campo. Nada é carregado até o arquivo ser válido.</p>
+  <div class="modal-wrap"><div class="modal">
+    <header><h3>Abrir JSON</h3><button class="btn">✕</button></header>
+    <div class="content">
+      <div class="drop">Arraste um arquivo <b>.json</b> aqui, clique para escolher, ou cole o texto abaixo.</div>
+      <div class="field"><textarea style="min-height:90px;font-family:var(--mono);font-size:12px">{ "schemaVersion": 1, "name": "Revisão de PR", "nodes": [ … ], "edges": [ { "source": "n3", "target": "n3" … } ] }</textarea></div>
+      <div class="errbox"><b>Não foi possível abrir (2 problemas):</b><br>
+        • <code>objective</code>: campo obrigatório ausente.<br>
+        • <code>edges[4]</code>: uma peça não pode ligar a si mesma (INV-03).</div>
+    </div>
+    <footer><button class="btn">Cancelar</button><button class="btn primary" disabled>Abrir grafo</button></footer>
+  </div></div>
+</section>
+<div style="height:40px"></div>
+</body>
+</html>
