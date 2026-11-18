@@ -1,49 +1,55 @@
-# HANDOFF — 2026-11-18 (sessão 3: L01 domain)
+# HANDOFF — 2026-11-18 (sessão 4: L02 application)
 
 ## Estado
-- Camada atual: **L01 domain — gate verde**, ainda **sem commit** em `feature/layer-01-domain`
-  (criada a partir de `develop`, que já tem o merge da L00).
-- A tag `v0.0.1` **não existe ainda**: `git tag v0.0.1 develop` fecha a L00.
-- Q1, Q2 e Q3 resolvidas no SPEC (§3.1, §3.3, VAL-05, §12). VAL-10 ganhou definição de início e
-  alcance (§3.5), e o contrato de `validateGraph` (códigos sem texto; mensagens na UI).
+- Camada atual: **L02 application — gate verde**, ainda **sem commit** em
+  `feature/layer-02-application` (criada a partir de `develop`, que tem a L01 e a tag `v0.1.0`).
+- Tags existentes: `v0.0.1`, `v0.1.0`.
+- **Nenhuma questão aberta** no SPEC §12: Q5 (FR-03, corte em 2 passos) e Q6 (FR-12, 4 presets
+  com ids e textos) resolvidas nesta sessão.
+- SPEC atualizado antes do código: portas `PromptRenderer`, `GraphCodec`, `GraphSummary`,
+  `CodecIssue` (§7.1); casos de uso `UpdateGraph` e `OpenGraph` e os contratos da L02 (§7.2);
+  INV-09 (nome do grafo).
 
-### O que a L01 entrega (`packages/core/src/domain/`)
-- `model.ts`, `ids.ts` (IDs nominais), `result.ts`, `errors.ts` (`DomainError` com código INV-xx,
-  `NODE_NOT_FOUND`, `EDGE_KIND_MISMATCH`).
-- `edge-kind.ts`: derivação do §3.2. `queries.ts`: consultas internas (alcance, sucessores).
-- `invariants.ts`: `canAddNode` (INV-01), `canConnect` (INV-02..06, devolve o tipo do fio),
-  `checkNodeName` (INV-07, nomes contados em grafemas), `isValidMaxRounds` (INV-08) e
-  `checkGraph` (grafo inteiro, para o import da L03).
-- `topo-sort.ts`: `topologicalOrder` estável (x, y, id); ciclos vão ao fim.
-- `supervisor.ts`: `supervisorBuilders`, `judgedSources`, `returnLinks`, `hasReturnAnchor`.
-- `validation.ts`: `validateGraph` (VAL-01..10) e `hasBlockingErrors`.
-- Testes em `packages/core/test/domain/`: tabelas por INV/VAL e 4 propriedades com
-  `fast-check` 4.10.2 (instalado com OK do usuário).
-- Placeholders da L00 removidos (`test/smoke.test.ts`, constantes `*_LAYER`).
+### O que a L02 entrega
+- Domínio: `labels.ts` (rótulos pt-BR dos tipos, `nextNodeName`, `DEFAULT_GRAPH_NAME`),
+  `bar-presets.ts` (catálogo Q6, `addPresetLine`/`removePresetLine`), `BarPresetId` como união,
+  `checkGraphName` (INV-09, também no `checkGraph`), códigos `EDGE_NOT_FOUND` e `NOT_APPLICABLE`.
+- `packages/core/src/application/`:
+  - `ports.ts`: portas do §7.1 e `EditContext` (`{ clock, ids }`).
+  - `graph-commands.ts`: `createGraph`, `addNode`, `connectNodes`, `disconnectEdge`, `updateNode`,
+    `moveNode` (snap 16 px), `duplicateNode` (+32 px), `deleteNode`, `toggleBarPreset`,
+    `setEdgeCondition`, `updateGraph`, `clearGraph`, `autoLayout`. Sem mudança → mesmo objeto.
+  - `io.ts`: `validate`, `exportPrompt` (devolve só os erros), `exportJson`, `importJson`
+    (GraphId novo).
+  - `library.ts`: `listGraphs` (mais recente primeiro), `openGraph`, `saveGraph`, `deleteGraph`.
+  - `history.ts`: `startHistory`, `record`, `undo`, `redo`, limite 100.
+- Testes: `test/application/` com portas falsas (`fakes.ts`), tabela por caso de uso e uma
+  propriedade (comandos aleatórios mantêm o grafo válido; undo/redo exato).
 
 ## Pendências
-- Commit da L01 (manual), merge em `develop`, tag `v0.1.0`.
+- Commit da L02 (manual), merge em `develop`, tag `v0.2.0`.
 - Gate e2e (`bun run --filter ui e2e`) só existe a partir da L04.
-- Textos pt-BR das regras VAL ficam para a L05 (`ui/src/lib/i18n/pt-BR.ts`).
-- Questões abertas: Q5 (até L04), Q6 (até L05).
+- Textos pt-BR das regras VAL e rótulos/descrições dos presets: L05 (`ui/src/lib/i18n/pt-BR.ts`).
 
 ## Próximo passo
-- **L02 application** em `feature/layer-02-application`: portas (§7.1), casos de uso (§7.2) sobre
-  as funções do domínio, nome automático `"{Tipo} {n}"` (FR-01), undo/redo por snapshots (FR-08).
+- **L03 infrastructure** em `feature/layer-03-infrastructure`: schema zod (nomes com até 80
+  grafemas, como o INV-07), `GraphCodec` JSON, `PromptRenderer` (golden files do §6), repositório
+  IndexedDB (`idb-keyval`), `LayoutEngine` com `@dagrejs/dagre`. Instalar `zod`, `idb-keyval` e
+  `@dagrejs/dagre` só após OK.
 
 ## Gates
 Comando: `{ bun run --filter '*' typecheck && bun run --filter '*' lint && bun run --filter '*' test --coverage ; }`
 (resumo da saída, 2026-11-18)
 ```
 @graph-builder/core typecheck: Exited with code 0
-ui typecheck: COMPLETED 324 FILES 0 ERRORS 0 WARNINGS 0 FILES_WITH_PROBLEMS
+ui typecheck: COMPLETED 331 FILES 0 ERRORS 0 WARNINGS 0 FILES_WITH_PROBLEMS
 @graph-builder/core lint: Exited with code 0
 ui lint: Exited with code 0
-@graph-builder/core test:       Tests  115 passed (115)
-@graph-builder/core test: Statements   : 99.68% ( 313/314 )
-@graph-builder/core test: Branches     : 97.2% ( 174/179 )
-@graph-builder/core test: Functions    : 100% ( 84/84 )
-@graph-builder/core test: Lines        : 100% ( 229/229 )
+@graph-builder/core test:       Tests  176 passed (176)
+@graph-builder/core test: Statements   : 99.8% ( 503/504 )
+@graph-builder/core test: Branches     : 98.63% ( 290/294 )
+@graph-builder/core test: Functions    : 100% ( 143/143 )
+@graph-builder/core test: Lines        : 100% ( 370/370 )
 ui test:       Tests  2 passed (2)
 ```
 Extra: `prettier --check .` → sem problemas.
