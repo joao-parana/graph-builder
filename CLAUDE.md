@@ -9,6 +9,10 @@ Estado da sessão anterior: `HANDOFF.md` (efêmero, sobrescrito a cada sessão).
 - SDD: nenhuma mudança de comportamento sem atualizar `SPEC.md` primeiro.
 - Implementar **uma camada por vez**, na ordem do SPEC §9 (L00 → L06), em `feature/layer-NN-nome`,
   merge em `develop`, tag semântica ao fim da camada.
+- **Versão:** o campo `"version"` de `package.json`, `packages/core/package.json` e
+  `ui/package.json` acompanha a tag (sem o `v`). No último commit da branch da camada, atualizar os
+  três para a versão da tag do SPEC §9 (ex.: L03 → `0.3.0`) e rodar `bun install` para o `bun.lock`
+  registrar a versão dos workspaces (não instala pacote novo). O merge em `develop` e a tag vêm depois.
 - Antes de editar código, listar as etapas. Se o plano tocar **mais de 3 arquivos**, parar e esperar o OK.
 - Antes de `rm`, `mv` ou refatoração em massa: mostrar o diff ou rodar dry-run.
 - **Não instalar dependências** (`bun add`, `bun install`) sem confirmação.
