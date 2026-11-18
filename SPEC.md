@@ -299,7 +299,8 @@ graph-builder/
 │           ├── application/     # use cases + ports
 │           └── infrastructure/  # zod schema, JSON codec, PromptRenderer, IndexedDB repo, layout
 └── ui/                          # SvelteKit 3 + Svelte 5 + @xyflow/svelte (presentation)
-    ├── svelte.config.js         # adapter-static, fallback index.html
+    ├── vite.config.ts           # sveltekit({ adapter: adapter-static, fallback index.html })
+    ├── package.json             # "imports": { "#lib/*": "./src/lib/*" } (Kit 3 removeu $lib)
     └── src/
         ├── routes/
         │   ├── +layout.ts       # export const ssr = false
@@ -371,7 +372,7 @@ Entrega `#2F5D3A` · Decisão `#5B3A7A` · Memória `#3E4C59`. Fundo papel `#F3E
 | 05 | `feature/layer-05-ui-panels` | inspetores M2–M5, painel "Antes de exportar" | Playwright: validação ao vivo | `v0.5.0` |
 | 06 | `feature/layer-06-ui-io` | modais M6–M8, Meus grafos, autosave | Playwright: export→import ida e volta | `v1.0.0` |
 
-Merge em `develop` ao fim de cada camada; `main` só em `v1.0.0`.
+Merge em `develop` ao fim de cada camada; `master` (branch principal) só em `v1.0.0`.
 
 ### 9.1 Gates (rodar em terminal ZSH separado, saída em `/tmp/gates.txt`)
 ```zsh

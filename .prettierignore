@@ -1,0 +1,9 @@
+node_modules/
+.svelte-kit/
+build/
+dist/
+coverage/
+bun.lock
+# Documentos são editados à mão (tabelas e mockups).
+**/*.md
+docs/

@@ -1,0 +1,6 @@
+# ADR-0002 — Bun instala pacotes e executa scripts.
+[install]
+# node_modules estrito: cada pacote só enxerga o que declara (como o pnpm).
+linker = "isolated"
+# Segundos (3 dias). Bloqueia versões recém-publicadas.
+minimumReleaseAge = 259200
