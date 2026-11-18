@@ -80,8 +80,8 @@ interface BaseNode {
 interface SupervisorNode extends BaseNode {
   kind: NodeKind.Supervisor;
   presets: BarPresetId[];      // presets ativos (toggle)
-  maxRounds: number;           // [INFERIDO] padrão 3, faixa 1..10
-  onExhausted: 'deliver-best-with-caveats' | 'fail';  // [INFERIDO] padrão: entregar o melhor com ressalvas
+  maxRounds: number;           // padrão 3, faixa 1..10 (Q2)
+  onExhausted: 'deliver-best-with-caveats' | 'fail';  // padrão: entregar o melhor com ressalvas (Q2)
 }
 
 interface MemoryNode extends BaseNode {
@@ -129,9 +129,21 @@ interface Graph {
 
 ### 3.3 Laço do Supervisor (retorno implícito)
 O fio de retorno "devolve para refazer" **não é desenhado pelo usuário**: é derivado.
-O Supervisor devolve para **todas as peças que produziram o que ele recebe** (origens dos seus fios
-de entrada do tipo `Flow`). Na UI é mostrado como fio tracejado vermelho, não selecionável.
-[INFERIDO] O ponto dourado no topo das peças na captura é tratado como âncora visual desse retorno.
+Na UI é mostrado como fio tracejado vermelho, não selecionável.
+
+Regras (Q1, Q3):
+1. **O que o Supervisor julga:** o que chega a ele por fio `Flow`. Contam só origens do tipo
+   **Trabalhador**, **Entrega** ou **Supervisor**. Entrada não é julgada (o insumo não se refaz).
+   Fios `Condition` e `MemoryRead` não contam.
+2. **Construtores** (destinos do retorno) de um Supervisor `S`:
+   - cada origem Trabalhador ou Entrega de um fio `Flow` que entra em `S`;
+   - para cada origem Supervisor `S'` (críticos em série), os construtores de `S'`, por recursão.
+     A recursão termina porque fios `Flow` não formam ciclo (INV-06).
+3. **Ponto dourado:** âncora **só visual** no topo das peças Trabalhador e Entrega (as que podem ser
+   construtores). O retorno desenhado sai do Supervisor e chega nesse ponto. O ponto não aceita
+   ligação nem arraste. Não é porta nem dado do modelo.
+4. O domínio expõe a derivação como função pura (`supervisorBuilders(graph, supervisorId)`); os
+   fios de retorno nunca entram em `Graph.edges`.
 
 ### 3.4 Invariantes (violação ⇒ comando rejeitado pelo domínio)
 
@@ -156,12 +168,22 @@ Não bloqueiam a edição. **Erros** bloqueiam a exportação; **alertas** não.
 | VAL-02 | alerta | "{nome}" está sem instruções. |
 | VAL-03 | erro | "{Decisão}" tem um fio sem condição escrita. |
 | VAL-04 | alerta | "{Decisão}" tem menos de dois caminhos. |
-| VAL-05 | erro | "{Supervisor}" não recebe nada para julgar. |
+| VAL-05 | erro | "{Supervisor}" não recebe nada para julgar. (Sem fio `Flow` vindo de Trabalhador, Entrega ou Supervisor — §3.3.) |
 | VAL-06 | alerta | "{Supervisor}" não leva a lugar nenhum (sem saída). |
 | VAL-07 | erro | O grafo não tem nenhuma Entrega. |
 | VAL-08 | alerta | "{nome}" está solta (sem fios). |
 | VAL-09 | alerta | "{Memória}" ninguém escreve nela / ninguém consulta. |
 | VAL-10 | erro | Há peças inalcançáveis a partir do início (Entrada ou peças sem entrada). |
+
+**VAL-10 — início e alcance:** se o grafo tem Entrada, o início é **só a Entrada**; sem Entrada,
+o início são as peças (exceto Memória) sem fio `Flow`/`Condition` de entrada. O alcance segue só
+fios `Flow` e `Condition`. Ficam fora da checagem as Memórias (VAL-09 cobre) e as peças sem
+nenhum fio `Flow`/`Condition` (VAL-08 cobre as soltas; assim uma peça recém-criada não bloqueia
+a exportação).
+
+**Contrato do domínio:** `validateGraph` devolve itens `{ rule, level, nodeIds, params }` sem texto;
+as mensagens acima ficam em `ui/src/lib/i18n/pt-BR.ts` (NFR-06). Ordem: erros antes de alertas,
+depois por ID da regra e ordem das peças no grafo.
 
 A lista é exibida agrupada; se passar de 5 itens mostra os 5 primeiros + "+ N outros" (como na captura).
 
@@ -401,9 +423,9 @@ Merge em `develop` ao fim de cada camada; `master` (branch principal) só em `v1
 
 | # | Questão | Proposta padrão | Até |
 |---|---|---|---|
-| Q1 | O ponto dourado no topo das peças é o retorno do Supervisor ou outra porta? | Retorno implícito, só visual (§3.3) | L01 |
-| Q2 | `maxRounds` / `onExhausted` existem no original? | Sim, padrão 3 / entregar com ressalvas | L01 |
-| Q3 | Supervisor pode julgar uma Entrega (não só Trabalhador)? | Sim — qualquer `Flow` de entrada | L01 |
+| Q1 | O ponto dourado no topo das peças é o retorno do Supervisor ou outra porta? | **Resolvida:** âncora só visual do retorno implícito, em Trabalhador e Entrega; não é porta (§3.3) | L01 |
+| Q2 | `maxRounds` / `onExhausted` existem no original? | **Resolvida:** sim (o mockup M3 já os mostra). Padrão 3 / entregar o melhor com ressalvas; faixa 1..10 (INV-08) | L01 |
+| Q3 | Supervisor pode julgar uma Entrega (não só Trabalhador)? | **Resolvida:** sim. Julga `Flow` vindo de Trabalhador, Entrega ou Supervisor (em série, com construtores por recursão); Entrada não (§3.3) | L01 |
 | Q4 | Gerenciador de pacotes: pnpm ou bun? | **Resolvida:** Bun ≥ 1.3, só para pacotes e scripts (ADR-0002) | L00 |
 | Q5 | Cortar fio com 1 clique (como diz a ajuda original) ou 2? | 2 cliques (evita acidente) + undo | L04 |
 | Q6 | Presets extras além de "Resultado WOW" e "Sem erros" | 4 presets do FR-12 | L05 |

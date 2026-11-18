@@ -17,6 +17,10 @@ Estado da sessão anterior: `HANDOFF.md` (efêmero, sobrescrito a cada sessão).
 - **Commits são manuais.** Não rodar `git add`, `git commit` nem `git push`. Ao fim de uma mudança,
   entregar em texto plano os comandos `git add <arquivos>` e `git commit` (Conventional Commits)
   para o usuário executar.
+  - Num worktree, gerar cada comando com `git -C <caminho absoluto do worktree>`, para o usuário
+    não precisar de `cd`. Ex.: `git -C /…/.claude/worktrees/<nome> add -A`.
+  - Comandos que exigem a branch `develop` (merge, tag de fim de camada) usam o caminho do
+    checkout principal, porque a `develop` fica aberta nele e o Git não a abre em dois worktrees.
 
 ## Arquitetura (resumo)
 - `packages/core/src/domain` — puro. Sem imports de `application`, `infrastructure`, Svelte ou DOM.
