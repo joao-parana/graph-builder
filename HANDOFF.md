@@ -13,12 +13,11 @@
     `ssr = false`) + `@xyflow/svelte`. Sem Zustand nem stores legados. **TypeScript 6.x**:
     SvelteKit 3, `svelte-check` e `typescript-eslint` não aceitam o TS 7. Proibido
     `ignoreDeprecations`.
-  - **ADR-0001:** itens 2 e 4 apontam para ADR-0002/0003. Status ainda **Proposto**.
+  - **ADR-0001 (Aceito em 2026-11-18):** com as alterações dos ADR-0002 e ADR-0003.
 - SPEC: Q4 resolvida (Bun). §7, §7.3, §9, §9.1 e NFR-01/02/06 atualizados.
 - CLAUDE.md: nova regra — **commits são manuais**; o agente entrega `git add`/`git commit` em texto.
 
 ## Pendências
-- **Aceitar o ADR-0001** (ou ajustar) antes da L00.
 - **Branches:** a principal local chama-se `master`, mas SPEC §9 fala em `main` e `develop`.
   `develop` não existe. Decidir o nome e criar `develop` antes do merge desta branch.
 - Confirmar a versão do Bun instalada (`bun --version`, precisa ser ≥ 1.3).

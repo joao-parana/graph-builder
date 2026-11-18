@@ -1,6 +1,6 @@
 # ADR-0001 — Stack e arquitetura do Graph Builder
 
-- **Status:** Proposto
+- **Status:** Aceito (2026-11-18), com as alterações do ADR-0002 (Bun) e do ADR-0003 (Svelte/SvelteKit, TypeScript 6.x)
 - **Data:** 2026-11-13
 - **Contexto da spec:** SPEC.md §5, §7
 
@@ -10,7 +10,7 @@ Precisa de regras de domínio testáveis isoladamente (invariantes, validação,
 renderização determinística) e de um canvas de nós e fios maduro.
 
 ## Decisão
-1. **TypeScript strict** em todo o código (sem `any`, `noUncheckedIndexedAccess`).
+1. **TypeScript strict** em todo o código (sem `any`, `noUncheckedIndexedAccess`); versão 6.x (ADR-0003).
 2. **Monorepo Bun** (ver ADR-0002; antes: pnpm) com dois workspaces:
    - `packages/core`: `domain` → `application` → `infrastructure`, sem framework de UI/DOM.
    - `ui/` na raiz: camada de apresentação (SvelteKit 3 + Svelte 5 + `@xyflow/svelte`;
