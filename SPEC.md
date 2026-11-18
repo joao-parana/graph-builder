@@ -157,6 +157,7 @@ Regras (Q1, Q3):
 | INV-06 | Fios `Flow`/`Condition` não podem formar ciclo (laços só existem via retorno implícito do Supervisor; fios de Memória são ignorados na checagem). |
 | INV-07 | `name` não vazio, ≤ 80 chars; nomes únicos por grafo (case-insensitive). |
 | INV-08 | `maxRounds` inteiro em 1..10. |
+| INV-09 | Nome do grafo não vazio, ≤ 80 chars (mesma regra de forma do INV-07). |
 
 ### 3.5 Regras de validação pré-exportação ("Antes de exportar")
 
@@ -199,7 +200,8 @@ Formato: **FR-xx** · descrição · critérios de aceite (Dado/Quando/Então).
   - Nome automático `"{Tipo} {n}"` com `n` = menor inteiro livre.
 - **FR-02 Ligar peças** arrastando do ponto direito de uma peça até o ponto esquerdo de outra.
   - Ligação inválida (INV-02..06) mostra o alvo em vermelho durante o arraste e não cria o fio.
-- **FR-03 Cortar fio** com clique no fio (confirmação visual: fio fica destacado; segundo clique ou `Del` remove). [INFERIDO]
+- **FR-03 Cortar fio** em 2 passos (Q5): o 1º clique seleciona o fio (fica destacado); um 2º clique
+  no mesmo fio, `Del` ou `Backspace` remove. `Esc` ou clique fora cancela. Desfazível (FR-08).
 - **FR-04 Apagar peça** com `Del`/`Backspace` ou botão "Apagar" no inspetor; remove fios ligados. Desfazível.
 - **FR-05 Duplicar peça** com `Ctrl/⌘+D`: copia tipo, instruções e configs; deslocamento +32px; nome com próximo `n`. Não copia fios.
 - **FR-06 Mover peça** por arraste; snap opcional na grade de 16px.
@@ -210,7 +212,19 @@ Formato: **FR-xx** · descrição · critérios de aceite (Dado/Quando/Então).
 - **FR-10 Sem seleção** → inspetor do Grafo: nome do grafo, **Objetivo** (textarea), resumo (contagem por tipo).
 - **FR-11 Peça selecionada** → selo do tipo, Nome, Instruções, texto de ajuda do tipo, "Recebe de:" / "Envia para:" (listas clicáveis), botão Apagar.
 - **FR-12 Supervisor**: o campo Instruções vira **"Instruções (a barra)"**, com placeholder de exemplo; bloco **"Preencher rápido — a barra"** com presets em toggle (clicar insere o texto do preset na barra; clicar de novo remove exatamente esse trecho); campos `maxRounds` e `onExhausted`.
-  - Presets v1: **Resultado WOW** ("todo crítico aprova com reação 'uau'"), **Sem erros** ("roda limpo, borda e erro forçados"), **Evidência concreta**, **Público explícito**. [os dois últimos são INFERIDOS]
+  - Presets v1 (Q6). O texto inserido vai para a barra e para o prompt exportado:
+
+    | `BarPresetId` | Rótulo | Descrição (no botão) | Texto inserido na barra |
+    |---|---|---|---|
+    | `wow` | Resultado WOW | todo crítico aprova com reação "uau" | `Todo crítico aprova com reação "uau".` |
+    | `no-errors` | Sem erros | roda limpo, borda e erro forçados | `Roda limpo, inclusive com casos de borda e erros forçados.` |
+    | `concrete-evidence` | Evidência concreta | toda afirmação tem prova | `Toda afirmação tem prova concreta.` |
+    | `explicit-audience` | Público explícito | o público-alvo está nomeado | `O público-alvo está explícito no artefato.` |
+
+  - **Ligar:** o texto entra numa linha nova no fim da barra (sem linha em branco extra).
+    **Desligar:** remove a linha com exatamente esse texto; se o usuário editou a linha, ela fica e
+    só o preset é desligado. O catálogo e os textos inseridos ficam no core (são dados do prompt);
+    rótulos e descrições ficam no i18n da UI (NFR-06).
 - **FR-13 Decisão**: lista os fios de saída, cada um com campo **Condição** editável e o destino.
 - **FR-14 Memória**: campo de relações (chips) + listas "Quem escreve" / "Quem consulta".
 - **FR-15 Entrada**: instruções = descrição do insumo esperado (ex.: "cole aqui o briefing").
@@ -340,13 +354,39 @@ interface GraphRepository { list(): Promise<GraphSummary[]>; get(id: GraphId): P
 interface LayoutEngine   { layout(g: Graph): Map<NodeId, Position> }
 interface Clock          { now(): string }
 interface IdGenerator    { next(): string }
+interface PromptRenderer { render(g: Graph): string }                 // template do §6 (L03)
+interface GraphCodec     { encode(g: Graph): string;                  // JSON (L03)
+                           decode(text: string): Result<Graph, CodecIssue[]> }
+interface GraphSummary   { id: GraphId; name: string; nodeCount: number; updatedAt: string } // FR-31
+interface CodecIssue     { path: string; message: string }            // FR-22: caminho do campo
 ```
 
 ### 7.2 Casos de uso
 `CreateGraph`, `AddNode`, `ConnectNodes`, `DisconnectEdge`, `UpdateNode`, `MoveNode`,
-`DuplicateNode`, `DeleteNode`, `ToggleBarPreset`, `SetEdgeCondition`, `ValidateGraph`,
-`ExportPrompt`, `ExportJson`, `ImportJson`, `AutoLayout`, `ListGraphs`, `SaveGraph`, `DeleteGraph`, `ClearGraph`.
+`DuplicateNode`, `DeleteNode`, `ToggleBarPreset`, `SetEdgeCondition`, `UpdateGraph`, `ValidateGraph`,
+`ExportPrompt`, `ExportJson`, `ImportJson`, `AutoLayout`, `ListGraphs`, `OpenGraph`, `SaveGraph`, `DeleteGraph`,
+`ClearGraph`.
 Todos puros sobre `Graph` imutável (retornam `Result<Graph, DomainError>`), o que torna undo/redo trivial (pilha de snapshots).
+
+Contratos (L02):
+- Comandos de edição recebem `{ clock, ids }` e gravam `updatedAt = clock.now()` quando mudam o grafo.
+- `AddNode`, `DuplicateNode` e `ConnectNodes` põem o item novo **no fim** de `nodes`/`edges`
+  (a UI lê o ID dali para selecionar).
+- `AddNode` / `DuplicateNode`: nome `"{Tipo} {n}"`, `n` = menor inteiro ≥ 1 livre entre os nomes
+  desse padrão (FR-01, FR-05). Supervisor nasce com `SUPERVISOR_DEFAULTS` e sem presets.
+- `UpdateNode`: campos de outro tipo de peça → `NOT_APPLICABLE`. Nome é gravado sem espaços nas
+  pontas. Relações da Memória: sem espaços nas pontas, sem vazias, sem repetição.
+- `UpdateGraph`: nome (INV-09) e objetivo (FR-10, FR-33).
+- `MoveNode`: `snap` opcional arredonda para a grade de 16 px (FR-06).
+- `DeleteNode` remove os fios ligados (FR-04). `ClearGraph` esvazia peças e fios; mantém nome,
+  objetivo e viewport (FR-32).
+- `SetEdgeCondition`: só em fio `Condition`; senão `NOT_APPLICABLE`. Fio inexistente →
+  `EDGE_NOT_FOUND`.
+- `ExportPrompt`: com erro de validação (§3.5) devolve os itens; senão, o texto do `PromptRenderer`.
+- `ImportJson`: `GraphCodec.decode` → `checkGraph` (§3.4). O grafo importado ganha `GraphId` novo
+  e `updatedAt = now` (não sobrescreve um grafo salvo).
+- Undo/redo (FR-08): histórico em memória com 100 passos; comando sem mudança não entra. A UI
+  registra o arraste de peça uma vez, ao soltar.
 
 ### 7.3 Dependências previstas
 - **UI:** `svelte` (5.x), `@sveltejs/kit` (3.x), `@sveltejs/vite-plugin-svelte` (7.x),
@@ -427,5 +467,5 @@ Merge em `develop` ao fim de cada camada; `master` (branch principal) só em `v1
 | Q2 | `maxRounds` / `onExhausted` existem no original? | **Resolvida:** sim (o mockup M3 já os mostra). Padrão 3 / entregar o melhor com ressalvas; faixa 1..10 (INV-08) | L01 |
 | Q3 | Supervisor pode julgar uma Entrega (não só Trabalhador)? | **Resolvida:** sim. Julga `Flow` vindo de Trabalhador, Entrega ou Supervisor (em série, com construtores por recursão); Entrada não (§3.3) | L01 |
 | Q4 | Gerenciador de pacotes: pnpm ou bun? | **Resolvida:** Bun ≥ 1.3, só para pacotes e scripts (ADR-0002) | L00 |
-| Q5 | Cortar fio com 1 clique (como diz a ajuda original) ou 2? | 2 cliques (evita acidente) + undo | L04 |
-| Q6 | Presets extras além de "Resultado WOW" e "Sem erros" | 4 presets do FR-12 | L05 |
+| Q5 | Cortar fio com 1 clique (como diz a ajuda original) ou 2? | **Resolvida:** 2 passos (clique seleciona; 2º clique ou `Del` remove) + undo (FR-03) | L04 |
+| Q6 | Presets extras além de "Resultado WOW" e "Sem erros" | **Resolvida:** os 4 presets do FR-12, com ids e textos definidos (o `ToggleBarPreset` da L02 precisa deles) | L05 |

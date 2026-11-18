@@ -1,3 +1,6 @@
-// Camada de aplicação: casos de uso e portas. Depende só de domain.
-// Conteúdo real a partir da L02 (SPEC §7.1, §7.2).
-export {};
+// Camada de aplicação (SPEC §7.1, §7.2): casos de uso e portas. Depende só de domain.
+export * from './graph-commands.ts';
+export * from './history.ts';
+export * from './io.ts';
+export * from './library.ts';
+export * from './ports.ts';

@@ -45,6 +45,12 @@ export function checkNodeName(
   return ok(undefined);
 }
 
+/** INV-09: nome do grafo (mesma forma do INV-07, sem unicidade). */
+export function checkGraphName(name: string): Result<void, DomainError> {
+  const shape = nameShapeProblem(name);
+  return shape === undefined ? ok(undefined) : err(domainError('INV-09', { reason: shape }));
+}
+
 /** INV-08. */
 export const isValidMaxRounds = (value: number): boolean =>
   Number.isInteger(value) && value >= MAX_ROUNDS_MIN && value <= MAX_ROUNDS_MAX;
@@ -114,6 +120,9 @@ function cycleNodes(graph: Graph): readonly NodeId[] {
 export function checkGraph(graph: Graph): readonly DomainError[] {
   const errors: DomainError[] = [];
   const nodes = nodeMap(graph);
+
+  const graphName = checkGraphName(graph.name);
+  if (!graphName.ok) errors.push(graphName.error);
 
   const inputs = graph.nodes.filter((node) => node.kind === NodeKind.Input);
   if (inputs.length > 1) errors.push(domainError('INV-01', { nodeIds: inputs.map((n) => n.id) }));

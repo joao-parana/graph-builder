@@ -21,8 +21,8 @@ export enum EdgeKind {
   MemoryRead = 'memory-read',
 }
 
-/** Presets da barra (FR-12). O catálogo é definido na L05 (Q6). */
-export type BarPresetId = string;
+/** Presets da barra (FR-12, Q6). Textos em `bar-presets.ts`. */
+export type BarPresetId = 'wow' | 'no-errors' | 'concrete-evidence' | 'explicit-audience';
 
 export type OnExhausted = 'deliver-best-with-caveats' | 'fail';
 
