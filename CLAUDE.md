@@ -33,6 +33,8 @@ Estado da sessão anterior: `HANDOFF.md` (efêmero, sobrescrito a cada sessão).
 - UI em pt-BR (textos em `ui/src/lib/i18n/pt-BR.ts`); identificadores de código em inglês.
 - Glossário UI ⇄ código: SPEC §2. Use exatamente esses nomes.
 - `Result<T, DomainError>` em vez de exceções no core.
+- Imports relativos com extensão `.ts`. Na UI, usar `#lib/...` (o SvelteKit 3 removeu `$lib`).
+  A UI importa o core só por `@graph-builder/core` (lint de fronteiras barra o resto).
 - Commits: Conventional Commits.
 
 ## Gates (terminal ZSH separado)

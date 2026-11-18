@@ -60,6 +60,13 @@ quebram.
 5. **Estrutura do `ui/`:** padrão SvelteKit. Uma rota (`src/routes/+page.svelte`, o editor).
    Componentes e lógica em `src/lib/` (`canvas/`, `inspector/`, `palette/`, `modals/`,
    `state/`, `i18n/`).
+
+   **Notas de implementação (L00, SvelteKit 3.2):**
+   - O SvelteKit 3 não aceita `svelte.config.js`. Adapter e `compilerOptions` (`runes: true`)
+     ficam em `sveltekit({ ... })`, no `ui/vite.config.ts`.
+   - O SvelteKit 3 removeu o alias `$lib`. Usar `#lib/*` (subpath imports do Node, em
+     `ui/package.json` → `"imports"`), com extensão: `import … from '#lib/i18n/pt-BR.ts'`.
+   - O `ui/tsconfig.json` estende `$app/tsconfig`, gerado por `svelte-kit sync`.
 6. **TypeScript 6.x** em todo o monorepo (`packages/core` e `ui/`). O SvelteKit 3 exige
    `^6.0.0` e o `typescript-eslint` exige `<6.1.0`. Não instalar o TS 7, nem em modo duplo.
    - **Preparar a migração:** nenhum `tsconfig` usa `ignoreDeprecations`. O código compila no
