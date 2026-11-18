@@ -279,13 +279,16 @@ instruções vazias renderizadas como `_(sem instruções)_`.
 
 ## 7. Arquitetura
 
-Clean Architecture em monorepo pnpm, com o frontend isolado em `ui/` na raiz.
+Clean Architecture em monorepo Bun (ADR-0002), com o frontend isolado em `ui/` na raiz.
+Bun instala pacotes e executa scripts; Vite, Vitest e Playwright rodam no Node LTS.
+Código de `packages/core` e `ui/` não usa APIs `Bun.*` nem `bun:*` (roda no navegador).
 
 ```
 graph-builder/
 ├── SPEC.md  CLAUDE.md  HANDOFF.md
 ├── docs/
 │   ├── adr/0001-stack-e-arquitetura.md
+│   ├── adr/0002-bun-como-gerenciador-de-pacotes.md
 │   └── mockups/mockups.html
 ├── packages/
 │   └── core/                    # framework-free
@@ -345,7 +348,7 @@ Entrega `#2F5D3A` · Decisão `#5B3A7A` · Memória `#3E4C59`. Fundo papel `#F3E
 
 | Camada | Branch | Entregáveis | Gate de saída | Tag |
 |---|---|---|---|---|
-| 00 | `feature/layer-00-scaffold` | monorepo pnpm, tsconfig strict, ESLint boundaries, Vitest, Vite vazio | `pnpm -r typecheck && pnpm -r lint` | `v0.0.1` |
+| 00 | `feature/layer-00-scaffold` | monorepo Bun (workspaces, `bunfig.toml`, `bun.lock`), tsconfig strict, ESLint boundaries, Vitest, Vite vazio | `bun run --filter '*' typecheck && bun run --filter '*' lint` | `v0.0.1` |
 | 01 | `feature/layer-01-domain` | model, INV-01..08, derivação de fio, topo sort, VAL-01..10 | testes de domínio ≥ 90% | `v0.1.0` |
 | 02 | `feature/layer-02-application` | casos de uso + portas + undo/redo | testes de casos de uso | `v0.2.0` |
 | 03 | `feature/layer-03-infrastructure` | zod schema, JSON codec, PromptRenderer (golden tests), IndexedDB repo, dagre | golden files do §6 batem | `v0.3.0` |
@@ -357,7 +360,7 @@ Merge em `develop` ao fim de cada camada; `main` só em `v1.0.0`.
 
 ### 9.1 Gates (rodar em terminal ZSH separado, saída em `/tmp/gates.txt`)
 ```zsh
-{ pnpm -r typecheck && pnpm -r lint && pnpm -r test -- --coverage && pnpm --filter ui e2e ; } 2>&1 | tee /tmp/gates.txt
+{ bun run --filter '*' typecheck && bun run --filter '*' lint && bun run --filter '*' test --coverage && bun run --filter ui e2e ; } 2>&1 | tee /tmp/gates.txt
 ```
 
 ---
@@ -385,6 +388,6 @@ Merge em `develop` ao fim de cada camada; `main` só em `v1.0.0`.
 | Q1 | O ponto dourado no topo das peças é o retorno do Supervisor ou outra porta? | Retorno implícito, só visual (§3.3) | L01 |
 | Q2 | `maxRounds` / `onExhausted` existem no original? | Sim, padrão 3 / entregar com ressalvas | L01 |
 | Q3 | Supervisor pode julgar uma Entrega (não só Trabalhador)? | Sim — qualquer `Flow` de entrada | L01 |
-| Q4 | Gerenciador de pacotes: pnpm ou bun? | pnpm | L00 |
+| Q4 | Gerenciador de pacotes: pnpm ou bun? | **Resolvida:** Bun ≥ 1.3, só para pacotes e scripts (ADR-0002) | L00 |
 | Q5 | Cortar fio com 1 clique (como diz a ajuda original) ou 2? | 2 cliques (evita acidente) + undo | L04 |
 | Q6 | Presets extras além de "Resultado WOW" e "Sem erros" | 4 presets do FR-12 | L05 |

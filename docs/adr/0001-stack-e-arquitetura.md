@@ -11,7 +11,7 @@ renderização determinística) e de um canvas de nós e fios maduro.
 
 ## Decisão
 1. **TypeScript strict** em todo o código (sem `any`, `noUncheckedIndexedAccess`).
-2. **Monorepo pnpm** com dois workspaces:
+2. **Monorepo Bun** (ver ADR-0002; antes: pnpm) com dois workspaces:
    - `packages/core`: `domain` → `application` → `infrastructure`, sem React/DOM.
    - `ui/` na raiz: camada de apresentação (Vite + React 19 + `@xyflow/react`).
 3. **Fronteiras de camada** reforçadas por `eslint-plugin-boundaries`.
