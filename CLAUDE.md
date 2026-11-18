@@ -19,15 +19,18 @@ Estado da sessão anterior: `HANDOFF.md` (efêmero, sobrescrito a cada sessão).
   para o usuário executar.
 
 ## Arquitetura (resumo)
-- `packages/core/src/domain` — puro. Sem imports de `application`, `infrastructure`, React ou DOM.
+- `packages/core/src/domain` — puro. Sem imports de `application`, `infrastructure`, Svelte ou DOM.
 - `packages/core/src/application` — casos de uso + portas. Depende só de `domain`.
 - `packages/core/src/infrastructure` — zod, IndexedDB, dagre, PromptRenderer. Implementa portas.
-- `ui/` — React + @xyflow/react + Zustand. Chama casos de uso; nunca muta `Graph` diretamente.
+- `ui/` — SvelteKit 3 (SPA estático, `ssr = false`) + Svelte 5 (runes) + `@xyflow/svelte` (ADR-0003).
+  Chama casos de uso; nunca muta `Graph` diretamente. Sem stores legados (`writable`) nem Zustand.
+- TypeScript 6.x: o SvelteKit 3, o `svelte-check` e o `typescript-eslint` não aceitam o 7 (ADR-0003).
+  Não instalar o TS 7 (nem em modo duplo) e não usar `ignoreDeprecations` no `tsconfig`.
 - Toolchain (ADR-0002): Bun instala pacotes e executa scripts; Vite, Vitest e Playwright rodam no
   Node LTS. Não usar `bun test`, `bun --bun` nem APIs `Bun.*`/`bun:*` em `packages/core` ou `ui/`.
 
 ## Convenções
-- UI em pt-BR (textos em `ui/src/i18n/pt-BR.ts`); identificadores de código em inglês.
+- UI em pt-BR (textos em `ui/src/lib/i18n/pt-BR.ts`); identificadores de código em inglês.
 - Glossário UI ⇄ código: SPEC §2. Use exatamente esses nomes.
 - `Result<T, DomainError>` em vez de exceções no core.
 - Commits: Conventional Commits.

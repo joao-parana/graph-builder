@@ -216,12 +216,12 @@ Formato: **FR-xx** · descrição · critérios de aceite (Dado/Quando/Então).
 
 | ID | Requisito |
 |---|---|
-| NFR-01 | TypeScript `strict: true`, `noUncheckedIndexedAccess`, proibido `any` (lint). |
-| NFR-02 | Camadas `domain` e `application` sem import de React, DOM ou libs de UI (verificado por regra de lint de fronteira). |
+| NFR-01 | TypeScript 6.x (exigido pelo SvelteKit 3 e pelo `typescript-eslint`; ADR-0003), `strict: true`, `noUncheckedIndexedAccess`, proibido `any` (lint), proibido `ignoreDeprecations` no `tsconfig`. |
+| NFR-02 | Camadas `domain` e `application` sem import de Svelte, DOM ou libs de UI (verificado por regra de lint de fronteira). |
 | NFR-03 | Cobertura ≥ 90% em `domain` + `application` (Vitest). |
 | NFR-04 | 200 peças / 400 fios com pan/zoom a 60 fps num M3; validação < 16 ms. |
 | NFR-05 | Funciona offline; nenhum dado sai do navegador. |
-| NFR-06 | UI em pt-BR; textos centralizados em `ui/src/i18n/pt-BR.ts`. |
+| NFR-06 | UI em pt-BR; textos centralizados em `ui/src/lib/i18n/pt-BR.ts`. |
 | NFR-07 | Acessibilidade: todas as ações da paleta/inspetor por teclado; foco visível; contraste AA. |
 | NFR-08 | Navegadores: Chrome, Safari e Firefox atuais. |
 
@@ -282,6 +282,7 @@ instruções vazias renderizadas como `_(sem instruções)_`.
 Clean Architecture em monorepo Bun (ADR-0002), com o frontend isolado em `ui/` na raiz.
 Bun instala pacotes e executa scripts; Vite, Vitest e Playwright rodam no Node LTS.
 Código de `packages/core` e `ui/` não usa APIs `Bun.*` nem `bun:*` (roda no navegador).
+A UI usa **Svelte 5** (runes) e **SvelteKit 3** em modo SPA estático, sem SSR e sem servidor (ADR-0003).
 
 ```
 graph-builder/
@@ -289,6 +290,7 @@ graph-builder/
 ├── docs/
 │   ├── adr/0001-stack-e-arquitetura.md
 │   ├── adr/0002-bun-como-gerenciador-de-pacotes.md
+│   ├── adr/0003-ui-em-svelte-e-sveltekit.md
 │   └── mockups/mockups.html
 ├── packages/
 │   └── core/                    # framework-free
@@ -296,10 +298,16 @@ graph-builder/
 │           ├── domain/          # model, invariants, edge-kind derivation, validation, topo sort
 │           ├── application/     # use cases + ports
 │           └── infrastructure/  # zod schema, JSON codec, PromptRenderer, IndexedDB repo, layout
-└── ui/                          # Vite + React + @xyflow/react (presentation)
+└── ui/                          # SvelteKit 3 + Svelte 5 + @xyflow/svelte (presentation)
+    ├── svelte.config.js         # adapter-static, fallback index.html
     └── src/
-        ├── canvas/  inspector/  palette/  modals/  i18n/
-        └── state/               # store (Zustand) chamando use cases do core
+        ├── routes/
+        │   ├── +layout.ts       # export const ssr = false
+        │   └── +page.svelte     # editor (única rota)
+        └── lib/
+            ├── canvas/          # inclui mapping.ts (Graph ⇄ SvelteFlow)
+            ├── inspector/  palette/  modals/  i18n/
+            └── state/           # runes ($state) em .svelte.ts chamando use cases do core
 ```
 
 ### 7.1 Portas (application)
@@ -318,8 +326,15 @@ interface IdGenerator    { next(): string }
 Todos puros sobre `Graph` imutável (retornam `Result<Graph, DomainError>`), o que torna undo/redo trivial (pilha de snapshots).
 
 ### 7.3 Dependências previstas
-`@xyflow/react`, `react`, `zustand`, `zod`, `idb-keyval`, `@dagrejs/dagre` (layout), `vitest`,
-`@playwright/test`, `eslint` + `eslint-plugin-boundaries`, `prettier`.
+- **UI:** `svelte` (5.x), `@sveltejs/kit` (3.x), `@sveltejs/vite-plugin-svelte` (7.x),
+  `@sveltejs/adapter-static` (4.x), `@xyflow/svelte` (2.x), `vite` (8.x).
+- **Core:** `zod`, `idb-keyval`, `@dagrejs/dagre` (layout).
+- **Qualidade:** `typescript` (6.x — o SvelteKit 3 não aceita o 7), `svelte-check`, `vitest`,
+  `@testing-library/svelte`, `@playwright/test`, `eslint` + `eslint-plugin-boundaries` +
+  `eslint-plugin-svelte`, `prettier` + `prettier-plugin-svelte`.
+
+Política (ADR-0003): no scaffold da L00, usar a versão mais atual de cada pacote compatível com
+o Svelte e o SvelteKit mais atuais. Versões de referência em 2026-11-18: ver tabela do ADR-0003.
 (Instalação só após OK — ver CLAUDE.md.)
 
 ---
@@ -348,7 +363,7 @@ Entrega `#2F5D3A` · Decisão `#5B3A7A` · Memória `#3E4C59`. Fundo papel `#F3E
 
 | Camada | Branch | Entregáveis | Gate de saída | Tag |
 |---|---|---|---|---|
-| 00 | `feature/layer-00-scaffold` | monorepo Bun (workspaces, `bunfig.toml`, `bun.lock`), tsconfig strict, ESLint boundaries, Vitest, Vite vazio | `bun run --filter '*' typecheck && bun run --filter '*' lint` | `v0.0.1` |
+| 00 | `feature/layer-00-scaffold` | monorepo Bun (workspaces, `bunfig.toml`, `bun.lock`), tsconfig strict, ESLint boundaries, Vitest, SvelteKit vazio (adapter-static, `ssr = false`) | `bun run --filter '*' typecheck && bun run --filter '*' lint` | `v0.0.1` |
 | 01 | `feature/layer-01-domain` | model, INV-01..08, derivação de fio, topo sort, VAL-01..10 | testes de domínio ≥ 90% | `v0.1.0` |
 | 02 | `feature/layer-02-application` | casos de uso + portas + undo/redo | testes de casos de uso | `v0.2.0` |
 | 03 | `feature/layer-03-infrastructure` | zod schema, JSON codec, PromptRenderer (golden tests), IndexedDB repo, dagre | golden files do §6 batem | `v0.3.0` |
