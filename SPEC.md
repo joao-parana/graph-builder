@@ -371,7 +371,12 @@ aparece.
     salvamento é tentado de novo na próxima mudança e quando o navegador volta a ficar online.
 - **FR-56 Sessão expirada:** se a sessão não puder ser renovada, o indicador fica "não salvo", o
   toast diz "Sua sessão expirou. Entre de novo." e o topo volta a mostrar "Entrar com GitHub".
-  - O grafo aberto continua em memória; ao entrar de novo com a mesma conta, ele é gravado na nuvem.
+  - O grafo aberto continua em memória. Entrar de novo leva ao GitHub e recarrega o app, o que
+    perderia a memória; por isso, ao clicar "Entrar com GitHub" com o indicador "não salvo" no modo
+    nuvem, o app antes guarda o grafo aberto neste navegador (mesmo `GraphId`) e avisa "O grafo não
+    salvo na nuvem foi guardado neste navegador.".
+  - Na volta, o modo nuvem abre o grafo mais recente da nuvem; o guardado fica em "Meus grafos —
+    neste navegador", de onde pode ser copiado para a nuvem (FR-54).
 
 Textos da v2 (NFR-06: em `ui/src/lib/i18n/pt-BR.ts`, na chave `cloud`):
 
@@ -379,10 +384,10 @@ Textos da v2 (NFR-06: em `ui/src/lib/i18n/pt-BR.ts`, na chave `cloud`):
 |---|---|
 | Botão de login (FR-50) | "Entrar com GitHub"; durante a troca do código: "Entrando…" |
 | Seletor de modo (FR-53) | rótulo "Onde salvar"; opções "Neste navegador" e "Na nuvem"; dica sem sessão: "Entre com o GitHub para usar a nuvem" |
-| Menu do usuário (FR-52) | "@{login}"; item "Sair" |
+| Menu do usuário (FR-52) | "@{login}" (rótulo acessível "Conta @{login}"); item "Sair" |
 | Título de "Meus grafos" (FR-53) | "Meus grafos — neste navegador" / "Meus grafos — na nuvem" |
 | Ação por linha (FR-54) | "Copiar para a nuvem" / "Copiar para este navegador"; menu "⋯" com rótulo "Mais ações" |
-| Toasts | "Copiado para a nuvem"; "Copiado para este navegador"; "Sua conta do GitHub não tem acesso à nuvem. Peça um convite."; "Não foi possível entrar agora. Tente de novo."; "Não foi possível salvar na nuvem: {motivo}"; "Sem conexão: as mudanças serão salvas quando a conexão voltar."; "Sua sessão expirou. Entre de novo." |
+| Toasts | "Copiado para a nuvem"; "Copiado para este navegador"; "Sua conta do GitHub não tem acesso à nuvem. Peça um convite."; "Não foi possível entrar agora. Tente de novo."; "Não foi possível salvar na nuvem: {motivo}"; "Sem conexão: as mudanças serão salvas quando a conexão voltar."; "Sua sessão expirou. Entre de novo."; "O grafo não salvo na nuvem foi guardado neste navegador." |
 | Ajuda (FR-40) | seção "Conta e nuvem": "Sem conta, os grafos ficam só neste navegador. Com o GitHub, convidados guardam grafos na nuvem e os abrem em outro computador. Em Meus grafos, copie um grafo de um lugar para o outro." |
 
 ---
@@ -706,8 +711,12 @@ vem da variável de ambiente `BASE_PATH` (`kit.paths.base`): o workflow usa `/gr
 origem `joao-parana.github.io` (banco `graph-builder`).
 - **v2 (L09):** o build do modo nuvem recebe `PUBLIC_SUPABASE_URL` e `PUBLIC_SUPABASE_KEY` (chave
   pública) como *variables* do GitHub Actions. Sem elas, o build é só local (FR-50). No Supabase, as
-  URLs de retorno permitidas são `https://joao-parana.github.io/graph-builder/` e as de dev/preview
-  (`http://localhost:5173/`, `http://localhost:4173/`).
+  URLs de retorno permitidas são `https://joao-parana.github.io/graph-builder/` e as de dev/preview.
+  - Local, o login usa `127.0.0.1`, não `localhost`: o Supabase local manda ao GitHub o callback
+    `http://127.0.0.1:54321/auth/v1/callback` (o do OAuth App de dev tem que ser igual), e o Safari
+    pode forçar `https://` em `localhost` (HSTS guardado de outro app).
+  - O `dev:cloud` ouve em `127.0.0.1:5173` e a `site_url` local é `http://127.0.0.1:5173/`; as
+    voltas permitidas são `127.0.0.1` e `localhost` nas portas 5173 (dev) e 4173 (preview/e2e).
 
 ### 9.3 Variáveis do build (v2, L08)
 - Declaradas em `ui/src/env.ts` com `defineEnvVars` (SvelteKit 3; o `$env/static/public` está
@@ -718,8 +727,9 @@ origem `joao-parana.github.io` (banco `graph-builder`).
   | `PUBLIC_SUPABASE_URL` | URL do projeto (`http(s)://…`) | `public: true`, `static: true`, opcional |
   | `PUBLIC_SUPABASE_KEY` | chave pública (`sb_publishable_…` ou a `anon` antiga) | `public: true`, `static: true`, opcional |
 
-- `static: true`: o valor entra no bundle no build; sem as duas, o código da nuvem sai no
-  tree-shaking e o app é a v1.
+- `static: true`: o valor entra no bundle no build. O código da nuvem (`supabase-js` e adaptadores)
+  fica num chunk à parte, carregado por `import()` só quando as duas existem; sem elas, o app não o
+  baixa e é a v1.
 - O modo nuvem só existe com **as duas** preenchidas. Só uma preenchida é erro de configuração: o
   build falha com a mensagem "Defina PUBLIC_SUPABASE_URL e PUBLIC_SUPABASE_KEY juntas (ou nenhuma)".
 - O `schema` da URL rejeita o que não for `http://` ou `https://`; a *service role key*

@@ -8,5 +8,5 @@
     "noImplicitOverride": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src", "e2e", "*.ts", "*.js"]
+  "include": ["src", "e2e", "scripts", "*.ts", "*.js"]
 }

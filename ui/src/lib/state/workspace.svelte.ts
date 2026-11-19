@@ -1,6 +1,8 @@
 // Grafo aberto + "Meus grafos" (FR-30, FR-31). Liga o Editor ao GraphRepository: salva com debounce
-// e troca de grafo gravando antes o que estiver pendente.
+// e troca de grafo gravando antes o que estiver pendente. Na v2, o repositório troca com o modo
+// (FR-53) e a mensagem de falha depende dele (FR-55).
 import {
+  copyGraph,
   createGraph,
   deleteGraph,
   type DomainError,
@@ -22,9 +24,15 @@ export const SAVE_DEBOUNCE_MS = 500;
 
 export type SaveStatus = 'saved' | 'saving' | 'error';
 
+/** Texto do toast quando a gravação falha (local: o do FR-30; nuvem: FR-55). */
+export type DescribeFailure = (error: unknown) => string;
+
+const localFailure: DescribeFailure = () => ptBR.top.saveFailed;
+
 export class Workspace {
   private readonly editor: Editor;
-  private readonly repo: GraphRepository;
+  private repo: GraphRepository;
+  private describeFailure: DescribeFailure = localFailure;
   private readonly delay: number;
   private timer: ReturnType<typeof setTimeout> | null = null;
   /** Última versão gravada (grafo do histórico + viewport): igual a ela, não grava de novo. */
@@ -96,9 +104,9 @@ export class Workspace {
           this.stored = version;
           if (this.timer === null) this.status = 'saved';
         },
-        () => {
+        (error: unknown) => {
           this.status = 'error';
-          this.editor.notify(ptBR.top.saveFailed);
+          this.editor.notify(this.describeFailure(error));
         },
       );
     return this.writing;
@@ -115,6 +123,30 @@ export class Workspace {
     await saveGraph(this.repo, graph);
     this.show(graph);
     await this.refresh();
+  }
+
+  /**
+   * FR-53: troca o repositório (modo). Grava antes o pendente no repositório antigo, zera o
+   * histórico e abre o mais recente do novo (ou cria um). Se o novo falhar, a exceção sobe.
+   */
+  async use(repo: GraphRepository, describeFailure: DescribeFailure = localFailure): Promise<void> {
+    await this.flush();
+    this.repo = repo;
+    this.describeFailure = describeFailure;
+    this.stored = null;
+    this.graphs = [];
+    await this.start();
+  }
+
+  /** FR-54: copia um grafo deste modo para o outro; grava antes o pendente. */
+  async copyTo(id: GraphId, target: GraphRepository): Promise<Graph | null> {
+    await this.flush();
+    return copyGraph(this.editor.ctx, this.repo, target, id);
+  }
+
+  /** FR-56: guarda o grafo aberto em outro repositório (mesmo id), sem trocar de modo. */
+  async keepIn(target: GraphRepository): Promise<void> {
+    await saveGraph(target, this.editor.snapshot);
   }
 
   async refresh(): Promise<void> {
