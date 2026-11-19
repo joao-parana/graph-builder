@@ -236,6 +236,14 @@ Formato: **FR-xx** · descrição · critérios de aceite (Dado/Quando/Então).
   - Ações: **Copiar**, **Baixar `.md`** / **Baixar `.json`**.
   - Prompt gerado segue o template do §6 e é **determinístico** (ordem topológica estável; empate por posição `x`, depois `y`, depois `id`).
 - **FR-22 Abrir JSON**: importa arquivo `.json` (ou colar texto). Valida com o schema; erros exibidos com caminho do campo. Migra `schemaVersion` antigas quando houver.
+  - Formato (`GraphCodec`, L03): o `Graph` do §3.1 em JSON com 2 espaços de recuo, chaves em ordem
+    fixa e `\n` no fim (`encode` → `decode` devolve o mesmo grafo).
+  - `decode`: JSON malformado → um item com caminho `$`; campos inválidos → um item por problema,
+    com caminho no formato `nodes[2].name`; mensagens em pt-BR. Chaves desconhecidas são ignoradas.
+  - Nomes seguem a forma do INV-07/INV-09 (até 80 caracteres percebidos). Unicidade, fios e ciclos
+    ficam para o `checkGraph` do `ImportJson`.
+  - Só existe a versão 1: `schemaVersion` ausente ou diferente → item no caminho `schemaVersion`.
+    Uma versão nova traz a sua migração.
 
 ### Persistência
 - **FR-30 Salvamento automático** no IndexedDB a cada mudança (debounce 500 ms). Indicador "Salvo" no topo.
@@ -254,7 +262,7 @@ Formato: **FR-xx** · descrição · critérios de aceite (Dado/Quando/Então).
 |---|---|
 | NFR-01 | TypeScript 6.x (exigido pelo SvelteKit 3 e pelo `typescript-eslint`; ADR-0003), `strict: true`, `noUncheckedIndexedAccess`, proibido `any` (lint), proibido `ignoreDeprecations` no `tsconfig`. |
 | NFR-02 | Camadas `domain` e `application` sem import de Svelte, DOM ou libs de UI (verificado por regra de lint de fronteira). |
-| NFR-03 | Cobertura ≥ 90% em `domain` + `application` (Vitest). |
+| NFR-03 | Cobertura ≥ 90% em `domain` + `application` + `infrastructure` (Vitest; a infraestrutura entra a partir da L03). |
 | NFR-04 | 200 peças / 400 fios com pan/zoom a 60 fps num M3; validação < 16 ms. |
 | NFR-05 | Funciona offline; nenhum dado sai do navegador. |
 | NFR-06 | UI em pt-BR; textos centralizados em `ui/src/lib/i18n/pt-BR.ts`. |
@@ -265,7 +273,7 @@ Formato: **FR-xx** · descrição · critérios de aceite (Dado/Quando/Então).
 
 ## 6. Template do prompt exportado
 
-Gerado por `PromptRenderer` (infra). Exemplo para um grafo pequeno:
+Gerado por `PromptRenderer` (infra). Exemplo (é o golden file `landing-page.md` da L03):
 
 ````markdown
 # Grafo: Landing page do produto X
@@ -277,30 +285,39 @@ Entregar a headline e o primeiro parágrafo da landing page do produto X.
 Execute as etapas na ordem abaixo. Cada Trabalhador produz um artefato.
 Cada Supervisor é um **crítico cego**: passe a ele **apenas o artefato**, nunca o raciocínio
 de quem o construiu. Se reprovar, devolva o artefato e o parecer ao(s) construtor(es) e repita,
-até {maxRounds} rodadas; esgotadas, siga com o melhor resultado e anote as ressalvas.
+até as rodadas máx. do Supervisor; esgotadas, siga o "Se esgotar" dele.
 
 ## Entrada
 Cole aqui o briefing do produto. → alimenta: Trabalhador 1
 
 ## Etapas
 ### 1. Trabalhador 1 (Trabalhador)
-Instruções: Escreva 5 headlines…
-Recebe de: Entrada · Envia para: Supervisor 1 · Escreve em: Memória 1 (relação `ideia`)
+Instruções: Escreva 5 headlines para o público do briefing.
+Recebe de: Entrada · Envia para: Supervisor 1 · Escreve em: Memória 1
 
 ### 2. Supervisor 1 (Supervisor — crítico cego)
-A barra: Reprove se a headline não citar o público…
+A barra: Reprove se a headline não citar o público.
 Julga o que vem de: Trabalhador 1 · Rodadas máx.: 3 · Se esgotar: entregar o melhor com ressalvas
+Se reprovar, devolve para: Trabalhador 1
 Aprovado → Decisão 1
 
 ### 3. Decisão 1 (Decisão — escolha UM caminho)
+Instruções: Olhe as headlines aprovadas e escolha um caminho.
+Recebe de: Supervisor 1
 - Se "há mais de uma headline aprovada" → Trabalhador 2
 - Se "só uma aprovada" → Entrega 1
 
-### 4. Entrega 1 (Entrega)
-Junte: Supervisor 1, Trabalhador 2 → artefato final.
+### 4. Trabalhador 2 (Trabalhador)
+Instruções: Escreva o primeiro parágrafo para cada headline aprovada.
+Recebe de: Decisão 1 · Envia para: Entrega 1 · Consulta: Memória 1
+
+### 5. Entrega 1 (Entrega)
+Instruções: Monte a headline e o parágrafo finais.
+Junte: Decisão 1, Trabalhador 2 → artefato final.
 
 ## Memória
 - Memória 1 — relações: `ideia`, `descartada_por`. Escrevem: Trabalhador 1. Consultam: Trabalhador 2.
+  Guarde cada headline proposta e, quando descartada, o motivo.
 
 ## Saída esperada
 O artefato de "Entrega 1".
@@ -308,8 +325,45 @@ O artefato de "Entrega 1".
 <!-- graph-builder schemaVersion=1 graphId=… -->
 ````
 
-Regras do renderer: Markdown puro; sem dados de posição; peças numeradas na ordem topológica;
-instruções vazias renderizadas como `_(sem instruções)_`.
+Regras do renderer (L03):
+1. **Geral:** Markdown puro, determinístico (mesmo grafo ⇒ mesmo texto, qualquer que seja a ordem de
+   `nodes`/`edges`), sem dados de posição. Seções separadas por uma linha em branco; o texto termina
+   com `\n`. Nomes e textos livres entram como estão, sem espaços nas pontas.
+2. **Ordem:** a ordem topológica estável do FR-21 vale para as etapas e para toda lista de nomes
+   (separados por `, `). As saídas de uma Decisão seguem a ordem do destino.
+3. **Seções, nesta ordem:** `# Grafo: {nome}`, `## Objetivo`, `## Como executar`, `## Entrada`
+   (só se houver Entrada), `## Etapas`, `## Memória` (só se houver Memória), `## Saída esperada` e o
+   rodapé `<!-- graph-builder schemaVersion=1 graphId={id} -->`.
+4. **Textos vazios:** objetivo vazio → `_(sem objetivo)_`; instruções vazias → `_(sem instruções)_`;
+   condição vazia → `- Se _(sem condição)_ → {destino}`.
+5. **Texto de várias linhas** (instruções, barra): o rótulo fica sozinho na linha (`Instruções:`) e
+   o texto vem nas linhas seguintes.
+6. **Como executar:** a 1ª linha é fixa. O parágrafo do Supervisor só aparece se houver Supervisor
+   e não cita número de rodadas (cada Supervisor tem o seu; ele aparece na etapa).
+7. **Entrada:** `{instruções} → alimenta: {destinos}`; se ela também grava numa Memória, acrescenta
+   ` · escreve em: {memórias}`. Sem destino, só o texto.
+8. **Etapas:** todas as peças menos Entrada e Memória, numeradas a partir de 1, com o título
+   `### {n}. {nome} ({Tipo}[ — crítico cego | — escolha UM caminho])`. Linhas de ligação juntam as
+   partes não vazias com ` · ` e somem se todas estiverem vazias.
+   - "Recebe de" = origens de fios `Flow`/`Condition`; "Envia para" = destinos de fios `Flow`;
+     "Escreve em" = destinos `MemoryWrite`; "Consulta" = origens `MemoryRead`.
+   - **Trabalhador:** `Instruções:`; `Recebe de · Envia para · Escreve em · Consulta`.
+   - **Supervisor:** `A barra:`; `Julga o que vem de · Rodadas máx. · Se esgotar` (§3.3);
+     `Também recebe de:` (origens que ele não julga, se houver); `Se reprovar, devolve para:`
+     (construtores, §3.3, se houver); `Aprovado → {destinos}` (se houver); `Escreve em · Consulta`.
+     "Se esgotar": `entregar o melhor com ressalvas` ou `parar e informar a falha`.
+   - **Decisão:** `Instruções:`; `Recebe de · Escreve em · Consulta`; um item
+     `- Se "{condição}" → {destino}` por fio `Condition`.
+   - **Entrega:** `Instruções:`; `Junte: {Recebe de} → artefato final.` (se houver origem);
+     `Envia para · Escreve em · Consulta`.
+9. **Memória:** um item por Memória:
+   `- {nome} — relações: {relações entre crases}. Escrevem: {…}. Consultam: {…}.` Sem relações →
+   `relações: livres.`; "Escrevem"/"Consultam" vazios são omitidos. As instruções, se houver, vêm
+   na linha de baixo com recuo de 2 espaços.
+10. **Saída esperada:** as Entregas finais (sem fio `Flow` de saída). Uma → `O artefato de "{nome}".`;
+    várias → `Os artefatos de "{a}", "{b}".`; nenhuma → `_(nenhuma Entrega final)_`.
+
+O renderer não valida: `ExportPrompt` só o chama quando não há erro (§3.5).
 
 ---
 
@@ -333,7 +387,7 @@ graph-builder/
 │       └── src/
 │           ├── domain/          # model, invariants, edge-kind derivation, validation, topo sort
 │           ├── application/     # use cases + ports
-│           └── infrastructure/  # zod schema, JSON codec, PromptRenderer, IndexedDB repo, layout
+│           └── infrastructure/  # graph-schema, json-codec, prompt-renderer, indexeddb-repository, dagre-layout, system
 └── ui/                          # SvelteKit 3 + Svelte 5 + @xyflow/svelte (presentation)
     ├── vite.config.ts           # sveltekit({ adapter: adapter-static, fallback index.html })
     ├── package.json             # "imports": { "#lib/*": "./src/lib/*" } (Kit 3 removeu $lib)
@@ -391,7 +445,8 @@ Contratos (L02):
 ### 7.3 Dependências previstas
 - **UI:** `svelte` (5.x), `@sveltejs/kit` (3.x), `@sveltejs/vite-plugin-svelte` (7.x),
   `@sveltejs/adapter-static` (4.x), `@xyflow/svelte` (2.x), `vite` (8.x).
-- **Core:** `zod`, `idb-keyval`, `@dagrejs/dagre` (layout).
+- **Core:** `zod` (4.x), `idb-keyval` (6.x), `@dagrejs/dagre` (3.x, layout). Dev: `fake-indexeddb`
+  (6.x), IndexedDB em memória para os testes do repositório, que rodam no Node.
 - **Qualidade:** `typescript` (6.x — o SvelteKit 3 não aceita o 7), `svelte-check`, `vitest`,
   `@testing-library/svelte`, `@playwright/test`, `eslint` + `eslint-plugin-boundaries` +
   `eslint-plugin-svelte`, `prettier` + `prettier-plugin-svelte`.

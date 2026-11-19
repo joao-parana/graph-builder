@@ -1,3 +1,7 @@
-// Camada de infraestrutura: implementa as portas (zod, IndexedDB, dagre, PromptRenderer).
-// Conteúdo real a partir da L03.
-export {};
+// Camada de infraestrutura (SPEC §7): implementa as portas da aplicação.
+export * from './dagre-layout.ts';
+export * from './graph-schema.ts';
+export * from './indexeddb-repository.ts';
+export * from './json-codec.ts';
+export * from './prompt-renderer.ts';
+export * from './system.ts';
