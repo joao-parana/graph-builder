@@ -63,3 +63,20 @@ export async function renameGraph(
   if (result.ok && result.value !== graph) await repo.save(result.value);
   return result;
 }
+
+/**
+ * CopyGraph (FR-54): copia um grafo de um modo para o outro. A cópia ganha `GraphId` novo e
+ * `updatedAt = now` (como o `ImportJson`); o original não muda. `null` se ele não existe mais.
+ */
+export async function copyGraph(
+  ctx: EditContext,
+  from: GraphRepository,
+  to: GraphRepository,
+  id: GraphId,
+): Promise<Graph | null> {
+  const graph = await from.get(id);
+  if (graph === null) return null;
+  const copy: Graph = { ...graph, id: graphId(ctx.ids.next()), updatedAt: ctx.clock.now() };
+  await to.save(copy);
+  return copy;
+}

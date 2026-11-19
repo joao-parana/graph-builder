@@ -50,3 +50,30 @@ export interface EditContext {
   readonly clock: Clock;
   readonly ids: IdGenerator;
 }
+
+// v2 (ADR-0004): conta e nuvem.
+
+/** Onde ficam os grafos abertos e listados (SPEC §2). */
+export type StorageMode = 'local' | 'cloud';
+
+/** Usuário convidado, identificado pelo login do GitHub (FR-50). */
+export interface Account {
+  readonly id: string;
+  readonly login: string;
+  readonly avatarUrl: string | null;
+}
+
+/** FR-51: sem convite, login cancelado no GitHub ou falha de rede/servidor. */
+export type AuthError = 'NOT_INVITED' | 'CANCELLED' | 'NETWORK';
+
+export interface AuthGateway {
+  /** Sessão atual, ou `null`. */
+  account(): Promise<Account | null>;
+  /** Vai ao GitHub (OAuth com PKCE); volta para a raiz do app. */
+  signIn(): Promise<void>;
+  /** Na volta do GitHub: a conta ou o motivo da recusa; `null` se a página não é volta de login. */
+  completeSignIn(): Promise<Result<Account, AuthError> | null>;
+  signOut(): Promise<void>;
+  /** Mudanças de sessão (entrar, sair, expirar — FR-56). Devolve a função que cancela. */
+  onChange(listener: (account: Account | null) => void): () => void;
+}

@@ -34,7 +34,8 @@ Monorepo Bun com dois workspaces:
 packages/core/          # TypeScript puro (Clean Architecture)
   src/domain/           # modelo, invariantes (INV-01..09), validação (VAL-01..10), ordem topológica
   src/application/      # casos de uso, portas, desfazer/refazer
-  src/infrastructure/   # schema zod, codec JSON, PromptRenderer, IndexedDB (idb-keyval), dagre
+  src/infrastructure/   # schema zod, codec JSON, PromptRenderer, IndexedDB (idb-keyval), dagre, Supabase
+supabase/               # v2 (ADR-0004): config do Supabase local e migrations (tabela graphs + RLS)
 ui/                     # SvelteKit 3 (SPA estático) + Svelte 5 (runes) + @xyflow/svelte
   src/lib/              # canvas, paleta, inspetor, modais, estado do editor
   e2e/                  # Playwright
@@ -50,6 +51,7 @@ Pré-requisitos:
 - [Bun](https://bun.sh) **1.4.4** (gerenciador de pacotes e executor de scripts — ADR-0002)
 - [Node.js](https://nodejs.org) **≥ 22.17** (Vite, Vitest e Playwright rodam no Node)
 - Google Chrome instalado (projeto `chrome` dos testes e2e)
+- Docker (Colima, OrbStack ou Docker Desktop) para o Supabase local dos testes da nuvem (v2)
 
 ```bash
 git clone git@github.com:joao-parana/graph-builder.git
@@ -104,6 +106,17 @@ Gate completo (o mesmo que fecha cada camada; rode num terminal separado):
 ```bash
 { bun run --filter '*' typecheck && bun run --filter '*' lint && bun run --filter '*' test --coverage && bun run --filter ui e2e ; } 2>&1 | tee /tmp/gates.txt
 ```
+
+A partir da L07, o gate roda com o **Supabase local** no ar (o CLI vem nas devDependencies):
+
+```bash
+bun run db:start
+```
+
+`db:stop` para os containers e `db:reset` recria o banco a partir de `supabase/migrations/`. Sem o
+Supabase local, os testes da nuvem (contrato do repositório, RLS, sessão) são pulados com um aviso,
+e a cobertura deixa de valer como gate. Os testes leem a URL e as chaves do `supabase status`; nada
+aponta para o projeto de produção.
 
 Partes isoladas:
 
