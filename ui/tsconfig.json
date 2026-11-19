@@ -1,0 +1,12 @@
+{
+  // SvelteKit 3 gera node_modules/$app/tsconfig.json em `svelte-kit sync`.
+  "extends": "$app/tsconfig",
+  "compilerOptions": {
+    // Mesmas regras do tsconfig.base.json (NFR-01). Não usar ignoreDeprecations (ADR-0003).
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": ["src", "e2e", "*.ts", "*.js"]
+}

@@ -9,6 +9,10 @@ Estado da sessão anterior: `HANDOFF.md` (efêmero, sobrescrito a cada sessão).
 - SDD: nenhuma mudança de comportamento sem atualizar `SPEC.md` primeiro.
 - Implementar **uma camada por vez**, na ordem do SPEC §9 (L00 → L06), em `feature/layer-NN-nome`,
   merge em `develop`, tag semântica ao fim da camada.
+- **Versão:** o campo `"version"` de `package.json`, `packages/core/package.json` e
+  `ui/package.json` acompanha a tag (sem o `v`). No último commit da branch da camada, atualizar os
+  três para a versão da tag do SPEC §9 (ex.: L03 → `0.3.0`) e rodar `bun install` para o `bun.lock`
+  registrar a versão dos workspaces (não instala pacote novo). O merge em `develop` e a tag vêm depois.
 - Antes de editar código, listar as etapas. Se o plano tocar **mais de 3 arquivos**, parar e esperar o OK.
 - Antes de `rm`, `mv` ou refatoração em massa: mostrar o diff ou rodar dry-run.
 - **Não instalar dependências** (`bun add`, `bun install`) sem confirmação.
@@ -17,6 +21,10 @@ Estado da sessão anterior: `HANDOFF.md` (efêmero, sobrescrito a cada sessão).
 - **Commits são manuais.** Não rodar `git add`, `git commit` nem `git push`. Ao fim de uma mudança,
   entregar em texto plano os comandos `git add <arquivos>` e `git commit` (Conventional Commits)
   para o usuário executar.
+  - Num worktree, gerar cada comando com `git -C <caminho absoluto do worktree>`, para o usuário
+    não precisar de `cd`. Ex.: `git -C /…/.claude/worktrees/<nome> add -A`.
+  - Comandos que exigem a branch `develop` (merge, tag de fim de camada) usam o caminho do
+    checkout principal, porque a `develop` fica aberta nele e o Git não a abre em dois worktrees.
 
 ## Arquitetura (resumo)
 - `packages/core/src/domain` — puro. Sem imports de `application`, `infrastructure`, Svelte ou DOM.
@@ -33,6 +41,8 @@ Estado da sessão anterior: `HANDOFF.md` (efêmero, sobrescrito a cada sessão).
 - UI em pt-BR (textos em `ui/src/lib/i18n/pt-BR.ts`); identificadores de código em inglês.
 - Glossário UI ⇄ código: SPEC §2. Use exatamente esses nomes.
 - `Result<T, DomainError>` em vez de exceções no core.
+- Imports relativos com extensão `.ts`. Na UI, usar `#lib/...` (o SvelteKit 3 removeu `$lib`).
+  A UI importa o core só por `@graph-builder/core` (lint de fronteiras barra o resto).
 - Commits: Conventional Commits.
 
 ## Gates (terminal ZSH separado)

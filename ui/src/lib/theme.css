@@ -1,0 +1,433 @@
+/* Tema do M1 (SPEC §8): papel, tinta e uma cor por tipo de peça. */
+:root {
+  --paper: #f3eee4;
+  --paper2: #fbf8f2;
+  --ink: #1e1b16;
+  --muted: #6b6457;
+  --line: #d9d1c2;
+  --kind-input: #b08a2e;
+  --kind-worker: #1f3a5f;
+  --kind-supervisor: #8b2323;
+  --kind-delivery: #2f5d3a;
+  --kind-decision: #5b3a7a;
+  --kind-memory: #3e4c59;
+  --mono: ui-monospace, 'SF Mono', Menlo, monospace;
+  --serif: Georgia, 'Times New Roman', serif;
+  --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  font-family: var(--sans);
+  color: var(--ink);
+}
+
+/* Alças (FR-02): entrada/saída; alvo inválido em vermelho durante o arraste. */
+.svelte-flow .svelte-flow__handle.port {
+  width: 11px;
+  height: 11px;
+  border: 1.5px solid var(--ink);
+  background: #fff;
+}
+.svelte-flow .svelte-flow__handle.port.connectingto:not(.valid) {
+  border-color: var(--kind-supervisor);
+  background: #f3c9c9;
+  box-shadow: 0 0 0 3px rgb(139 35 35 / 30%);
+}
+.svelte-flow .svelte-flow__handle.port.connectingto.valid {
+  border-color: var(--kind-delivery);
+  background: #cfe6d3;
+}
+/* Ponto dourado (§3.3): só visual. */
+.svelte-flow .svelte-flow__handle.golden {
+  width: 9px;
+  height: 9px;
+  border: 1.5px solid #b08a2e;
+  background: #d7b65a;
+  cursor: default;
+}
+.svelte-flow .svelte-flow__handle.anchor {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Fios (FR-09). */
+.svelte-flow .wire-flow .svelte-flow__edge-path {
+  stroke: #3b342a;
+  stroke-width: 1.6;
+}
+.svelte-flow .wire-memory .svelte-flow__edge-path {
+  stroke: #7d8794;
+  stroke-width: 1.3;
+  stroke-dasharray: 2 4;
+}
+.svelte-flow .wire-return {
+  pointer-events: none;
+}
+.svelte-flow .wire-return .svelte-flow__edge-path {
+  stroke: var(--kind-supervisor);
+  stroke-width: 1.4;
+  stroke-dasharray: 5 4;
+}
+.svelte-flow .wire.armed .svelte-flow__edge-path {
+  stroke: var(--kind-supervisor);
+  stroke-width: 3;
+}
+.svelte-flow .wire-flow,
+.svelte-flow .wire-memory {
+  cursor: pointer;
+}
+
+/* Rodapé de zoom (FR-07). */
+.svelte-flow .zoombar {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: flex;
+  gap: 2px;
+  padding: 4px;
+  font-size: 12px;
+}
+.zoombar button {
+  border: 0;
+  background: none;
+  font: inherit;
+  padding: 4px 9px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.zoombar button:hover:not(:disabled),
+.zoombar button[aria-pressed='true'] {
+  background: var(--paper);
+}
+.zoombar button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.zoombar .value {
+  font-family: var(--mono);
+  color: var(--muted);
+  padding: 4px 9px;
+  min-width: 52px;
+  text-align: center;
+}
+
+/* Inspetor (FR-10..15, M2–M5). */
+.inspector {
+  border-left: 1px solid var(--line);
+  padding: 14px;
+  background: var(--paper2);
+  font-size: 13px;
+  overflow-y: auto;
+  min-height: 0;
+}
+.inspector .head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.badge {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: #fff;
+  background: var(--c);
+  border-radius: 20px;
+  padding: 3px 10px;
+  text-transform: uppercase;
+}
+.btn {
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font: 13px var(--sans);
+  cursor: pointer;
+}
+.btn.danger {
+  color: var(--kind-supervisor);
+}
+.label {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.help {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+.field {
+  margin: 12px 0;
+}
+.field input,
+.field textarea,
+.field select {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 7px 9px;
+  font: 13px var(--sans);
+  background: #fff;
+  margin-top: 4px;
+  color: var(--ink);
+}
+.field textarea {
+  min-height: 110px;
+  resize: vertical;
+  line-height: 1.4;
+}
+.field .invalid {
+  border-color: var(--kind-supervisor);
+}
+.errbox {
+  border: 1px solid #e3bdbd;
+  background: #fbf0f0;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 12.5px;
+  color: var(--kind-supervisor);
+  margin-top: 6px;
+}
+.row {
+  display: flex;
+  gap: 8px;
+}
+.row > * {
+  flex: 1;
+}
+.summary {
+  margin-top: 6px;
+  line-height: 1.7;
+}
+.muted {
+  color: var(--muted);
+}
+.quick {
+  border-left: 3px solid var(--kind-supervisor);
+  padding: 8px 10px;
+  background: #fff;
+  border-radius: 0 6px 6px 0;
+  margin-top: 10px;
+}
+.quick-title {
+  color: var(--kind-supervisor);
+}
+.preset {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 6px 9px;
+  margin-top: 6px;
+  background: var(--paper2);
+  cursor: pointer;
+}
+.preset.on {
+  border-color: var(--kind-supervisor);
+  background: #f7eaea;
+}
+.preset b {
+  font-size: 12.5px;
+}
+.preset span {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+}
+.paths {
+  margin-top: 14px;
+}
+.rel {
+  font-size: 12px;
+  margin-top: 10px;
+  color: var(--muted);
+  line-height: 1.7;
+}
+.rel .link {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: var(--kind-worker);
+  text-decoration: underline;
+  cursor: pointer;
+}
+.rel .nobody {
+  color: var(--kind-supervisor);
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 2px 4px 2px 9px;
+  font-size: 12px;
+  font-family: var(--mono);
+}
+.chip button {
+  border: 0;
+  background: none;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1;
+}
+.field .chip-input {
+  width: 110px;
+  margin-top: 0;
+  border-radius: 14px;
+  padding: 2px 9px;
+  font: 12px var(--mono);
+}
+
+/* "Antes de exportar" (FR-20). */
+.prexp {
+  position: absolute;
+  right: 14px;
+  bottom: 12px;
+  z-index: 5;
+  width: 330px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-left: 4px solid #e2b04a;
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 12px;
+}
+.prexp.errors {
+  border-left-color: var(--kind-supervisor);
+}
+.prexp .title {
+  color: var(--kind-supervisor);
+}
+.prexp ul {
+  margin: 6px 0 0;
+  padding-left: 16px;
+  line-height: 1.55;
+}
+.prexp li button {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.prexp li button:hover {
+  text-decoration: underline;
+}
+.prexp li.err {
+  color: var(--kind-supervisor);
+}
+.prexp li.more {
+  color: var(--muted);
+  list-style: none;
+  margin-left: -16px;
+}
+
+/* Só para leitores de tela. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Modais M6–M8 (FR-21, FR-22, FR-31, FR-32, FR-40). */
+dialog.modal {
+  width: min(760px, calc(100vw - 32px));
+  max-height: calc(100vh - 64px);
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--paper2);
+  color: var(--ink);
+  box-shadow: 0 20px 60px rgb(30 27 22 / 25%);
+}
+dialog.modal.narrow {
+  width: min(440px, calc(100vw - 32px));
+}
+dialog.modal::backdrop {
+  background: rgb(30 27 22 / 35%);
+}
+.modal-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line);
+}
+.modal-head h2 {
+  flex: 1;
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 18px;
+  font-weight: 500;
+}
+.modal-body {
+  padding: 14px 16px;
+  overflow: auto;
+  max-height: calc(100vh - 200px);
+}
+.modal-foot {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--line);
+}
+.modal-foot .note {
+  flex: 1;
+  font-size: 12px;
+  color: var(--muted);
+}
+.btn.primary {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper2);
+}
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.btn.link {
+  border-color: transparent;
+  background: none;
+  padding: 2px 6px;
+}
+.icon-btn {
+  border: none;
+  background: none;
+  font-size: 16px;
+  cursor: pointer;
+  color: var(--muted);
+}
+:focus-visible {
+  outline: 2px solid var(--kind-worker);
+  outline-offset: 2px;
+}

@@ -1,0 +1,9 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    // DOM só para tipos do IndexedDB em infrastructure. domain/application não usam
+    // globais do navegador (regra de lint no-restricted-globals, NFR-02).
+    "lib": ["ES2023", "DOM"]
+  },
+  "include": ["src", "test", "vitest.config.ts"]
+}

@@ -60,6 +60,13 @@ quebram.
 5. **Estrutura do `ui/`:** padrão SvelteKit. Uma rota (`src/routes/+page.svelte`, o editor).
    Componentes e lógica em `src/lib/` (`canvas/`, `inspector/`, `palette/`, `modals/`,
    `state/`, `i18n/`).
+
+   **Notas de implementação (L00, SvelteKit 3.2):**
+   - O SvelteKit 3 não aceita `svelte.config.js`. Adapter e `compilerOptions` (`runes: true`)
+     ficam em `sveltekit({ ... })`, no `ui/vite.config.ts`.
+   - O SvelteKit 3 removeu o alias `$lib`. Usar `#lib/*` (subpath imports do Node, em
+     `ui/package.json` → `"imports"`), com extensão: `import … from '#lib/i18n/pt-BR.ts'`.
+   - O `ui/tsconfig.json` estende `$app/tsconfig`, gerado por `svelte-kit sync`.
 6. **TypeScript 6.x** em todo o monorepo (`packages/core` e `ui/`). O SvelteKit 3 exige
    `^6.0.0` e o `typescript-eslint` exige `<6.1.0`. Não instalar o TS 7, nem em modo duplo.
    - **Preparar a migração:** nenhum `tsconfig` usa `ignoreDeprecations`. O código compila no
@@ -93,3 +100,10 @@ quebram.
 - **Riscos:** confirmar no protótipo da L04 que o Svelte Flow atende a NFR-04 (200 peças e
   400 fios a 60 fps). Se não atender, registrar aqui e reavaliar.
 - O core não muda: `packages/core` continua sem dependência de framework (NFR-02).
+
+## Adendo (2026-11-18, L04): exceção de idade mínima para o `@xyflow/svelte`
+O `@xyflow/svelte` 2.0.x saiu em 2026-11-16/17 e depende do `@xyflow/system` 1.0.0, da mesma
+data. O `minimumReleaseAge` de 3 dias (ADR-0002) só os liberaria em 2026-11-20. Para não atrasar a
+L04 nem passar pela linha 1.x, o `bunfig.toml` ganhou
+`minimumReleaseAgeExcludes = ["@xyflow/svelte", "@xyflow/system"]`. Instalado: `@xyflow/svelte`
+2.0.2. **Remover a exceção a partir de 2026-11-20**, quando a versão instalada já cumpre a idade.
