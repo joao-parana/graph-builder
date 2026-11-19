@@ -183,6 +183,12 @@ mostra `@seu-login` e "Onde salvar" fica em **Na nuvem**.
 - **No Studio:** **Table Editor** → schema `public` → tabela `graphs`. Cada linha tem `owner_id`,
   `name`, `node_count`, `updated_at` e o grafo inteiro em `data` (o mesmo JSON do "Exportar"). O
   Studio entra como administrador e mostra os grafos de todos os usuários.
+- **No SQL Editor do Studio:** a consulta versionada
+  [`supabase/snippets/q-list-graphs.sql`](supabase/snippets/q-list-graphs.sql) lista os grafos do
+  mais recente para o mais antigo. O Studio local lê e grava os snippets nessa pasta: a consulta
+  aparece na lista do **SQL Editor** (ou é só colar o conteúdo) e um snippet salvo no Studio vira
+  arquivo `.sql` ali. Dê um nome descritivo (`q-…`) e versione só consultas de leitura úteis ao
+  time; o "Untitled query NNN.sql" que o Studio cria por padrão não deve ir para o git.
 
 Apagar o usuário em **Authentication → Users** apaga também os grafos dele (`on delete cascade`). Para
 conferir o acesso negado: **Sair**, apagar o usuário e entrar de novo.
