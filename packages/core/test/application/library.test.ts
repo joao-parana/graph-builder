@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  copyGraph,
   deleteGraph,
   duplicateGraph,
   listGraphs,
@@ -74,5 +75,25 @@ describe('Meus grafos (FR-30, FR-31)', () => {
     });
     expect((await openGraph(repo, g.id))?.name).toBe('Beta');
     expect(await renameGraph(context(), repo, graphId('x'), 'Gama')).toBeNull();
+  });
+});
+
+describe('CopyGraph (FR-54)', () => {
+  it('copia para o outro repositório com id novo e updatedAt = now; o original não muda', async () => {
+    const local = new MemoryRepository();
+    const cloud = new MemoryRepository();
+    const g = at('a', 'Alfa', '2026-11-01T00:00:00.000Z');
+    await saveGraph(local, g);
+    const copy = await copyGraph(context(), local, cloud, g.id);
+    expect(copy).toEqual({ ...g, id: 'id-1', updatedAt: '2026-11-18T00:00:00.000Z' });
+    expect(await openGraph(cloud, graphId('id-1'))).toEqual(copy);
+    expect(await openGraph(local, g.id)).toEqual(g);
+    expect(await listGraphs(cloud)).toHaveLength(1);
+  });
+
+  it('grafo que não existe mais → null, sem gravar nada', async () => {
+    const cloud = new MemoryRepository();
+    expect(await copyGraph(context(), new MemoryRepository(), cloud, graphId('x'))).toBeNull();
+    expect(await listGraphs(cloud)).toEqual([]);
   });
 });
