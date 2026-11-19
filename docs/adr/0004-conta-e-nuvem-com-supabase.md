@@ -38,8 +38,9 @@ Restrições:
    - O *client secret* do OAuth App fica no Supabase, nunca no bundle.
    - O retorno do login é a própria raiz do app (`/graph-builder/?code=…`). Rota separada não
      funcionaria no Pages, que responde `404.html` a caminhos desconhecidos.
-4. **Só convidados:** "Allow new users to sign up" desligado no Supabase; o dono convida pelo
-   painel. Ver a questão Q7 (vínculo do convite por e-mail com o login do GitHub).
+4. **Só convidados:** "Allow new users to sign up" desligado no Supabase; o dono cadastra o
+   convidado pelo painel com um e-mail **verificado na conta do GitHub** dele. No primeiro login, o
+   Supabase liga a identidade do GitHub a esse usuário (Q7, resolvida abaixo).
 5. **Autorização no banco:** Row Level Security em toda tabela, com política `owner_id =
    auth.uid()` para `select`, `insert`, `update` e `delete`. Sem sessão, a API não devolve nada.
 6. **Chaves públicas no build:** a URL do projeto e a *publishable/anon key* entram no build como
@@ -83,12 +84,35 @@ Restrições:
   - os testes de integração e e2e da nuvem exigem Docker (Supabase CLI local);
   - um XSS passa a expor a sessão do usuário, não só dados locais.
 - **Riscos:**
-  - **Q7 (vínculo convite × GitHub):** com o cadastro fechado, o login pelo GitHub só entra se a
-    identidade se ligar ao usuário convidado por e-mail, o que depende do e-mail verificado no
-    GitHub ser o mesmo. Validar num projeto de teste antes da L07. Se falhar: allowlist de usernames
-    do GitHub num *auth hook* "before user created".
+  - **Convidado sem o e-mail verificado no GitHub** cai em "acesso negado" (FR-51). O convite tem
+    que usar um e-mail que a pessoa verificou no GitHub (qualquer um deles, não só o principal).
   - **Plano gratuito:** projetos inativos por uma semana são pausados. Aceitável para uso pessoal;
     reavaliar se houver mais usuários.
   - **Sessão no `localStorage`** (padrão do `supabase-js`): exposta a XSS. Mitigação: o Svelte
     escapa tudo por padrão, sem `{@html}` com dado do usuário; CSP por `<meta>` (o Pages não
     permite cabeçalhos).
+
+## Resolução da Q7 (2026-11-19): convite por e-mail × login pelo GitHub
+A documentação do Supabase não diz o que acontece com o cadastro fechado. A resposta veio do
+código do servidor de auth (`supabase/auth` v2.198.0, de 2026-11-16):
+`internal/api/provider/github.go`, `internal/models/linking.go` (`DetermineAccountLinking`) e
+`internal/api/external.go` (`createAccountFromExternalIdentity`, `getErrorQueryString`).
+
+1. **E-mails do GitHub:** o provedor pede o escopo `user:email` e lê todos os e-mails da conta, cada
+   um com as marcas `verified` e `primary`.
+2. **Vínculo:** o login procura usuários com algum dos e-mails **verificados** do GitHub (sem
+   diferenciar maiúsculas). Achando exatamente um, a decisão é `LinkAccount`: a identidade do GitHub
+   é ligada a ele. O usuário existente **não** precisa ter confirmado o e-mail, então um convidado
+   que nunca abriu o convite também serve.
+3. **Cadastro fechado:** `DisableSignup` só barra a decisão `CreateAccount` (nenhum usuário com
+   esses e-mails). `LinkAccount` e `AccountExists` (logins seguintes) passam.
+4. **Convidado não confirmado:** no vínculo, o servidor apaga identidades não confirmadas do usuário
+   (proteção contra tomada de conta antecipada) e, se o e-mail principal do GitHub for verificado,
+   confirma o usuário e emite a sessão.
+5. **Sem convite:** erro `signup_disabled`; a volta ao app traz `error=access_denied`,
+   `error_code=signup_disabled` e `error_description`. O app mapeia isso para `NOT_INVITED`
+   (FR-51).
+
+**Decisão:** o convite pelo painel basta; o *auth hook* "before user created" não é necessário. O
+gate da L07 confirma isso na prática, contra o Supabase local (convidado entra; não convidado
+recebe `signup_disabled`); o da L09, no projeto real.

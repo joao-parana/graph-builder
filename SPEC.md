@@ -3,7 +3,7 @@
 > **Status:** Draft v0.1 · **Data:** 2026-11-13 · **Dono:** João
 > **v2 (proposta, 2026-11-19, ADR-0004):** conta e grafos na nuvem com Supabase — §1, §1.3, §2,
 > FR-50..56, NFR-05/09/10, §7.1–§7.4, §9 (L07–L09), §10, §12 (Q7–Q9). Nada da v2 é implementado
-> antes de as questões Q7–Q9 serem resolvidas.
+> antes de o ADR-0004 ser aceito; Q7 resolvida, Q8 e Q9 até a L08.
 > **Contrato:** este arquivo é a fonte da verdade. Mudança de comportamento = mudança aqui primeiro.
 > **Origem:** inspirado na ferramenta mostrada em <https://www.youtube.com/watch?v=r8JueeaKJ9w>.
 > A página do vídeo não pôde ser lida; esta spec foi derivada de uma captura de tela.
@@ -341,6 +341,8 @@ aparece.
   - A URL perde os parâmetros do retorno (`?code=…`) sem recarregar a página.
   - O grafo local que estava aberto é gravado antes de sair para o GitHub.
 - **FR-51 Acesso negado:** conta do GitHub sem convite (ou login cancelado).
+  - Sem convite, o Supabase volta com `error_code=signup_disabled` (Q7); cancelado no GitHub, com
+    `error=access_denied` sem esse código. Os parâmetros podem vir na query ou no fragmento (`#`).
   - O app fica no modo local, sem sessão, e mostra: "Sua conta do GitHub não tem acesso à nuvem.
     Peça um convite." (cancelado: nenhuma mensagem). Nenhum dado local muda.
 - **FR-52 Sair:** menu do usuário no topo → "Sair".
@@ -655,7 +657,7 @@ Escopo da L05: inspetor (FR-10..15) e painel "Antes de exportar" (FR-20); export
 Escopo da L04: o grafo fica só em memória (salvamento automático e botões do topo na L06); o
 painel direito mostra um texto provisório (inspetor na L05).
 
-Escopo da v2 (L07–L09): §1.3, FR-50..56, NFR-09/10, §7.4. Antes da L07: resolver Q7–Q9 (§12).
+Escopo da v2 (L07–L09): §1.3, FR-50..56, NFR-09/10, §7.4. Antes da L07: Q7 resolvida; Q8 e Q9 até a L08 (§12).
 
 Merge em `develop` ao fim de cada camada; `master` (branch principal) só em `v1.0.0`.
 
@@ -715,7 +717,7 @@ origem `joao-parana.github.io` (banco `graph-builder`).
 | Q3 | Supervisor pode julgar uma Entrega (não só Trabalhador)? | **Resolvida:** sim. Julga `Flow` vindo de Trabalhador, Entrega ou Supervisor (em série, com construtores por recursão); Entrada não (§3.3) | L01 |
 | Q4 | Gerenciador de pacotes: pnpm ou bun? | **Resolvida:** Bun ≥ 1.3, só para pacotes e scripts (ADR-0002) | L00 |
 | Q5 | Cortar fio com 1 clique (como diz a ajuda original) ou 2? | **Resolvida:** 2 passos (clique seleciona; 2º clique ou `Del` remove) + undo (FR-03) | L04 |
-| Q7 | Com cadastro fechado, o login pelo GitHub entra no usuário convidado por e-mail (vínculo automático de identidades)? | Validar num projeto Supabase de teste: convidar um e-mail, entrar pelo GitHub com o mesmo e-mail verificado e com outro. Se não vincular: allowlist de logins do GitHub num *auth hook* "before user created" (ADR-0004) | L07 |
+| Q7 | Com cadastro fechado, o login pelo GitHub entra no usuário convidado por e-mail (vínculo automático de identidades)? | **Resolvida** (código do `supabase/auth` v2.198.0, ADR-0004): sim, se o e-mail do convite for um dos e-mails **verificados** da conta do GitHub; o convidado não precisa abrir o convite. Sem convite → `signup_disabled`. Sem *auth hook*. Conferir no gate da L07 (Supabase local) | L07 |
 | Q8 | Onde o navegador lembra o último modo (FR-53)? | `localStorage` (`graph-builder:mode`); sem sessão válida, sempre local | L08 |
 | Q9 | Como o e2e entra na nuvem, se o GitHub OAuth não é automatizável? | O teste cria o usuário pela API admin do Supabase local e injeta a sessão (`storageState`); o botão "Entrar" só é conferido até o redirecionamento | L08 |
 | Q6 | Presets extras além de "Resultado WOW" e "Sem erros" | **Resolvida:** os 4 presets do FR-12, com ids e textos definidos (o `ToggleBarPreset` da L02 precisa deles) | L05 |
