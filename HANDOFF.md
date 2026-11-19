@@ -56,7 +56,7 @@
 - Verificado: e2e completo 3× por navegador → 180/180; antes, 1 falha a cada ~12.
 
 ## Pendências
-- **A partir de 2026-11-20:** apagar `minimumReleaseAgeExcludes` do `bunfig.toml` e o aviso do adendo
+- **A partir de 2026-11-21:** apagar `minimumReleaseAgeExcludes` do `bunfig.toml` e o aviso do adendo
   do ADR-0003.
 - Cobertura de branches da UI: 84,16% (componentes `.svelte` cobertos pelo e2e).
 - Copiar (clipboard) não tem e2e: precisa de permissão diferente em cada navegador.
