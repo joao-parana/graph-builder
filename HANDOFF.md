@@ -1,11 +1,12 @@
 # HANDOFF — 2026-11-19 (sessão 8: L06 ui-io)
 
 ## Estado
-- Camada atual: **L06 ui-io — gate verde (e2e em Chrome, Firefox e WebKit)** em
-  `feature/layer-06-ui-io`. A L06 já tem commit (`40cf603`); a correção do clique no fio (abaixo)
-  ainda **não tem commit**. Falta merge em `develop`, tag `v1.0.0` e merge em `main`.
-- `version` já em `1.0.0` nos três `package.json`; `bun.lock` atualizado.
-- Tags existentes: `v0.0.1` … `v0.5.0`. A `v1.0.0` fecha o roadmap do SPEC §9 e vai para `main`.
+- **Roadmap v1 concluído.** L06 e a correção do clique no fio estão em `develop` e `master`
+  (tags `v1.0.0` e `v1.0.1`). Os `package.json` seguem em `1.0.0` (o `v1.0.1` não mudou a versão).
+- Branches (limpeza de 2026-11-19): só `master`, `develop` e `claude/bun-homebrew-update-c2a999`
+  (casa da worktree, alinhada com a `develop`). As branches de camada foram apagadas; as tags
+  `v0.0.1`…`v1.0.1` guardam cada ponto. Correção em andamento: `fix/docs-master-branch`
+  (SPEC §9 e este arquivo diziam `main`; a branch principal é a `master`).
 - SPEC atualizado antes do código:
   - FR-21: nome do arquivo baixado, toast "Copiado", aba JSON nunca bloqueada.
   - FR-22: arrastar, escolher ou colar; erros do `checkGraph` com `nodes[i]`/`edges[i]`; o grafo
@@ -15,7 +16,7 @@
   - FR-31: ordem, data ("hoje, HH:MM"), renomear na linha, Duplicar com " (cópia)", apagar o aberto.
   - FR-33: título do topo se comporta como o campo Nome do grafo.
   - Modais: `<dialog>` nativo, Esc/✕, foco volta ao botão; atalhos param com modal aberto.
-  - §7.2: `DuplicateGraph` e `RenameGraph`. §9: escopo da L06; `master` → `main`.
+  - §7.2: `DuplicateGraph` e `RenameGraph`. §9: escopo da L06 e fluxo de branches depois da v1.
 
 ### O que a L06 entrega
 - Core: `duplicateGraph(ctx, graph)` e `renameGraph(ctx, repo, id, name)` em `application/library.ts`.
@@ -52,7 +53,8 @@
 - Verificado: e2e completo 3× por navegador → 180/180; antes, 1 falha a cada ~12.
 
 ## Pendências
-- Commit da correção do clique no fio, merge em `develop`, tag `v1.0.0`, merge em `main`.
+- Commit de `fix/docs-master-branch` e merge em `develop`.
+- `package.json` em `1.0.0` com a tag `v1.0.1`: alinhar na próxima release (regra do CLAUDE.md).
 - **A partir de 2026-11-20:** apagar `minimumReleaseAgeExcludes` do `bunfig.toml` e o aviso do adendo
   do ADR-0003.
 - Cobertura de branches da UI: 84,16% (componentes `.svelte` cobertos pelo e2e).
