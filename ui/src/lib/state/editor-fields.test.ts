@@ -124,3 +124,28 @@ describe('Editor — edição de campos (FR-08, FR-10..14)', () => {
     expect(editor.updateNode(memory.id, { onExhausted: 'fail' })).toBe(false);
   });
 });
+
+describe('Editor — Limpar e abrir outro grafo (FR-30, FR-32)', () => {
+  it('limpar é um passo desfazível e tira a seleção', () => {
+    const { editor } = setup();
+    expect(editor.clear()).toBe(true);
+    expect(editor.graph.nodes).toEqual([]);
+    expect(editor.selectedNodeIds).toEqual([]);
+    editor.undo();
+    expect(editor.graph.nodes).toHaveLength(5);
+  });
+
+  it('load troca o grafo, zera o histórico e aplica o viewport', () => {
+    const { editor } = setup();
+    const other = { ...editor.graph, nodes: [], edges: [], viewport: { x: 1, y: 2, zoom: 0.8 } };
+    const loads = editor.loads;
+    editor.load(other);
+    expect(editor.graph).toBe(other);
+    expect(editor.canUndo).toBe(false);
+    expect(editor.viewport).toEqual({ x: 1, y: 2, zoom: 0.8 });
+    expect(editor.loads).toBe(loads + 1);
+    expect(editor.snapshot).toBe(other);
+    editor.viewport = { x: 0, y: 0, zoom: 1 };
+    expect(editor.snapshot).toEqual({ ...other, viewport: { x: 0, y: 0, zoom: 1 } });
+  });
+});
