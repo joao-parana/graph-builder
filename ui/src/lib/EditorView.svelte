@@ -1,14 +1,26 @@
 <script lang="ts">
   // Editor (M1): topo, paleta, canvas e painel direito. Fica dentro do SvelteFlowProvider.
   import { useSvelteFlow } from '@xyflow/svelte';
-  import type { NodeKind } from '@graph-builder/core';
+  import { tick } from 'svelte';
+  import {
+    type NodeId,
+    type NodeKind,
+    validateGraph,
+    type ValidationIssue,
+  } from '@graph-builder/core';
   import Canvas from '#lib/canvas/Canvas.svelte';
+  import Inspector from '#lib/inspector/Inspector.svelte';
   import { ptBR } from '#lib/i18n/pt-BR.ts';
   import { kindFrom } from '#lib/palette/drag.ts';
   import Palette from '#lib/palette/Palette.svelte';
   import { Editor } from '#lib/state/editor.svelte.ts';
   import { shortcutFor } from '#lib/state/shortcuts.ts';
   import Toast from '#lib/Toast.svelte';
+  import { flaggedNodeIds } from '#lib/validation/messages.ts';
+  import PreExportPanel from '#lib/validation/PreExportPanel.svelte';
+
+  /** FR-20: espera entre a última mudança e o recálculo. */
+  const VALIDATION_DEBOUNCE_MS = 150;
 
   /** Metade da peça (190 × 72): o ponto do clique/soltura vira o centro dela. */
   const HALF = { x: 95, y: 36 };
@@ -16,6 +28,42 @@
   const editor = new Editor();
   const flow = useSvelteFlow();
   let canvasArea: HTMLElement | undefined = $state();
+  let issues: readonly ValidationIssue[] = $state.raw(validateGraph(editor.graph));
+  const flagged = $derived(flaggedNodeIds(issues));
+
+  $effect(() => {
+    const graph = editor.graph;
+    const timer = setTimeout(() => (issues = validateGraph(graph)), VALIDATION_DEBOUNCE_MS);
+    return () => {
+      clearTimeout(timer);
+    };
+  });
+
+  /** FR-11, FR-20: seleciona e centraliza a peça, sem mudar o zoom. */
+  function reveal(id: NodeId) {
+    const node = editor.graph.nodes.find((n) => n.id === id);
+    if (node === undefined) return;
+    editor.select([id]);
+    void flow.setCenter(node.position.x + HALF.x, node.position.y + HALF.y, {
+      zoom: flow.getZoom(),
+      duration: 200,
+    });
+  }
+
+  /** FR-20: item sem peça tira a seleção; o VAL-01 põe o foco no Objetivo. */
+  async function pick(issue: ValidationIssue) {
+    const first = issue.nodeIds[0];
+    if (first !== undefined) {
+      reveal(first);
+      return;
+    }
+    editor.select([]);
+    if (issue.rule === 'VAL-01') {
+      editor.focus = false;
+      await tick();
+      document.getElementById('graph-objective')?.focus();
+    }
+  }
 
   function addAtCenter(kind: NodeKind) {
     const rect = canvasArea?.getBoundingClientRect();
@@ -71,12 +119,11 @@
       <Palette onadd={addAtCenter} />
     {/if}
     <main class="canvas-area" bind:this={canvasArea}>
-      <Canvas {editor} ondropkind={drop} />
+      <Canvas {editor} {flagged} ondropkind={drop} />
+      <PreExportPanel {issues} onpick={(issue: ValidationIssue) => void pick(issue)} />
     </main>
     {#if !editor.focus}
-      <aside class="inspector">
-        <p class="help">{ptBR.inspector.placeholder}</p>
-      </aside>
+      <Inspector {editor} onreveal={reveal} />
     {/if}
   </div>
   <Toast toast={editor.toast} ondismiss={() => (editor.toast = null)} />
@@ -123,18 +170,8 @@
     grid-template-columns: 1fr;
   }
   .canvas-area {
+    position: relative;
     min-height: 0;
     min-width: 0;
-  }
-  .inspector {
-    border-left: 1px solid var(--line);
-    padding: 14px;
-    background: var(--paper2);
-    font-size: 13px;
-  }
-  .help {
-    font-size: 12px;
-    color: var(--muted);
-    line-height: 1.4;
   }
 </style>

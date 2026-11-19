@@ -219,10 +219,21 @@ Formato: **FR-xx** · descrição · critérios de aceite (Dado/Quando/Então).
   - Atalhos de teclado (FR-03..05, FR-08) não agem com o foco num campo de texto.
   - Comando recusado pelo domínio (ex.: INV-01 ao adicionar ou duplicar a Entrada) mostra um
     toast com o motivo e não altera o grafo.
+  - Edição de texto no inspetor (L05): cada tecla já muda o grafo, mas a sequência de edições no
+    mesmo campo é **um passo** de desfazer, fechado quando o campo perde o foco
+    (`amend` do histórico, §7.2).
 
 ### Inspetor (painel direito)
 - **FR-10 Sem seleção** → inspetor do Grafo: nome do grafo, **Objetivo** (textarea), resumo (contagem por tipo).
+  - Resumo: contagem por tipo (como no M1) e "N fios · M laços de retorno" (retornos do §3.3).
+  - Várias peças selecionadas → "N peças selecionadas" e botão Apagar.
+  - Campo com valor que o domínio recusa (INV-07, INV-08, INV-09): o campo guarda o texto digitado
+    e mostra o motivo logo abaixo (sem toast); o grafo não muda. Ao perder o foco, volta ao último
+    valor válido.
 - **FR-11 Peça selecionada** → selo do tipo, Nome, Instruções, texto de ajuda do tipo, "Recebe de:" / "Envia para:" (listas clicáveis), botão Apagar.
+  - Listas com os rótulos do §6 (regra 8). Trabalhador e Entrega: Recebe de, Envia para, Escreve
+    em, Consulta. Supervisor: Julga o que vem de, Aprovado →. Clicar num nome seleciona e
+    centraliza a peça.
 - **FR-12 Supervisor**: o campo Instruções vira **"Instruções (a barra)"**, com placeholder de exemplo; bloco **"Preencher rápido — a barra"** com presets em toggle (clicar insere o texto do preset na barra; clicar de novo remove exatamente esse trecho); campos `maxRounds` e `onExhausted`.
   - Presets v1 (Q6). O texto inserido vai para a barra e para o prompt exportado:
 
@@ -238,11 +249,17 @@ Formato: **FR-xx** · descrição · critérios de aceite (Dado/Quando/Então).
     só o preset é desligado. O catálogo e os textos inseridos ficam no core (são dados do prompt);
     rótulos e descrições ficam no i18n da UI (NFR-06).
 - **FR-13 Decisão**: lista os fios de saída, cada um com campo **Condição** editável e o destino.
+  - Condição vazia: campo em vermelho e o aviso "Este fio precisa de uma condição escrita." (M4).
 - **FR-14 Memória**: campo de relações (chips) + listas "Quem escreve" / "Quem consulta".
+  - Chip com × remove; "+ adicionar" aceita Enter ou vírgula. Lista vazia → "ninguém ainda" em
+    vermelho.
 - **FR-15 Entrada**: instruções = descrição do insumo esperado (ex.: "cole aqui o briefing").
 
 ### Validação e exportação
 - **FR-20 Painel "Antes de exportar"** flutuante no canto inferior direito do canvas, recalculado a cada mudança (debounce 150 ms); clicar num item seleciona e centraliza a peça. Some quando não há itens.
+  - Clique seleciona a 1ª peça do item. Itens sem peça (VAL-01, VAL-07) tiram a seleção; o VAL-01
+    põe o foco no campo Objetivo.
+  - Peças citadas num alerta ou erro ganham o contorno amarelo do M1.
 - **FR-21 Exportar para a IA** abre modal com abas **Prompt** e **JSON**:
   - Se houver erros (§3.5), a aba Prompt mostra a lista e os botões ficam desabilitados.
   - Ações: **Copiar**, **Baixar `.md`** / **Baixar `.json`**.
@@ -453,6 +470,8 @@ Contratos (L02):
   e `updatedAt = now` (não sobrescreve um grafo salvo).
 - Undo/redo (FR-08): histórico em memória com 100 passos; comando sem mudança não entra. A UI
   registra o arraste de peça uma vez, ao soltar.
+- `amend(history, next)` (L05): troca o grafo atual sem criar passo novo nem mexer no `past`; limpa
+  o `future`. Usado para juntar as edições de um campo num passo só.
 
 ### 7.3 Dependências previstas
 - **UI:** `svelte` (5.x), `@sveltejs/kit` (3.x), `@sveltejs/vite-plugin-svelte` (7.x),
@@ -500,6 +519,8 @@ Entrega `#2F5D3A` · Decisão `#5B3A7A` · Memória `#3E4C59`. Fundo papel `#F3E
 | 04 | `feature/layer-04-ui-canvas` | canvas, paleta, peças, fios, controles de visão, desfazer/refazer (FR-01..09) | Playwright: criar/ligar/cortar/duplicar | `v0.4.0` |
 | 05 | `feature/layer-05-ui-panels` | inspetores M2–M5, painel "Antes de exportar" | Playwright: validação ao vivo | `v0.5.0` |
 | 06 | `feature/layer-06-ui-io` | modais M6–M8, Meus grafos, autosave | Playwright: export→import ida e volta | `v1.0.0` |
+
+Escopo da L05: inspetor (FR-10..15) e painel "Antes de exportar" (FR-20); exportação e modais na L06.
 
 Escopo da L04: o grafo fica só em memória (salvamento automático e botões do topo na L06); o
 painel direito mostra um texto provisório (inspetor na L05).

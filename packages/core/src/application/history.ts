@@ -39,3 +39,12 @@ export function redo(history: History): History {
   if (next === undefined) return history;
   return { past: [...history.past, history.present], present: next, future: rest };
 }
+
+/**
+ * Troca o grafo atual sem criar passo (FR-08, L05): junta as edições de um campo num passo só.
+ * O mesmo objeto não muda nada; um grafo novo descarta o refazer.
+ */
+export function amend(history: History, next: Graph): History {
+  if (next === history.present) return history;
+  return { past: history.past, present: next, future: [] };
+}

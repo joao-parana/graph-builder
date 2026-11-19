@@ -31,6 +31,8 @@ export interface PieceData extends Record<string, unknown> {
   readonly relations: readonly string[];
   /** Ponto dourado (§3.3): Trabalhador e Entrega. */
   readonly returnAnchor: boolean;
+  /** Citada em "Antes de exportar" (FR-20): contorno amarelo. */
+  readonly flagged: boolean;
 }
 
 export type PieceNode = Node<PieceData, typeof PIECE_TYPE>;
@@ -43,8 +45,13 @@ export interface WireData extends Record<string, unknown> {
 
 export type Wire = Edge<WireData>;
 
-export function toFlowNodes(graph: Graph, selected: readonly NodeId[]): PieceNode[] {
+export function toFlowNodes(
+  graph: Graph,
+  selected: readonly NodeId[],
+  flagged: readonly string[] = [],
+): PieceNode[] {
   const chosen = new Set<string>(selected);
+  const warned = new Set(flagged);
   return graph.nodes.map((node) => ({
     id: node.id,
     type: PIECE_TYPE,
@@ -57,6 +64,7 @@ export function toFlowNodes(graph: Graph, selected: readonly NodeId[]): PieceNod
       instructions: node.instructions,
       relations: node.kind === NodeKind.Memory ? node.relations : [],
       returnAnchor: hasReturnAnchor(node.kind),
+      flagged: warned.has(node.id),
     },
   }));
 }

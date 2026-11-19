@@ -9,7 +9,9 @@ const wires = (page: Page) => page.locator('.svelte-flow__edge.wire-flow');
 const returns = (page: Page) => page.locator('.svelte-flow__edge.wire-return');
 const command = process.platform === 'darwin' ? 'Meta' : 'Control';
 
+/** Espera o elemento parar (Arrumar anima o enquadramento) antes de medir. */
 async function center(locator: Locator): Promise<{ x: number; y: number }> {
+  await locator.hover({ trial: true });
   const box = await locator.boundingBox();
   if (box === null) throw new Error('elemento sem caixa');
   return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
@@ -27,7 +29,11 @@ async function link(page: Page, from: string, to: string) {
 
 /** Clica no meio do fio (após Arrumar, os fios são retos). */
 async function clickWire(page: Page, index = 0) {
-  const point = await center(wires(page).nth(index).locator('.svelte-flow__edge-path'));
+  const path = wires(page).nth(index).locator('.svelte-flow__edge-path');
+  await expect(path).toBeVisible();
+  const box = await path.boundingBox();
+  if (box === null) throw new Error('fio sem caixa');
+  const point = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
   await page.mouse.click(point.x, point.y);
 }
 

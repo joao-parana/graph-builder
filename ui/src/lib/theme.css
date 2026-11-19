@@ -116,3 +116,233 @@ body {
   min-width: 52px;
   text-align: center;
 }
+
+/* Inspetor (FR-10..15, M2–M5). */
+.inspector {
+  border-left: 1px solid var(--line);
+  padding: 14px;
+  background: var(--paper2);
+  font-size: 13px;
+  overflow-y: auto;
+  min-height: 0;
+}
+.inspector .head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.badge {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: #fff;
+  background: var(--c);
+  border-radius: 20px;
+  padding: 3px 10px;
+  text-transform: uppercase;
+}
+.btn {
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font: 13px var(--sans);
+  cursor: pointer;
+}
+.btn.danger {
+  color: var(--kind-supervisor);
+}
+.label {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.help {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+.field {
+  margin: 12px 0;
+}
+.field input,
+.field textarea,
+.field select {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 7px 9px;
+  font: 13px var(--sans);
+  background: #fff;
+  margin-top: 4px;
+  color: var(--ink);
+}
+.field textarea {
+  min-height: 110px;
+  resize: vertical;
+  line-height: 1.4;
+}
+.field .invalid {
+  border-color: var(--kind-supervisor);
+}
+.errbox {
+  border: 1px solid #e3bdbd;
+  background: #fbf0f0;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 12.5px;
+  color: var(--kind-supervisor);
+  margin-top: 6px;
+}
+.row {
+  display: flex;
+  gap: 8px;
+}
+.row > * {
+  flex: 1;
+}
+.summary {
+  margin-top: 6px;
+  line-height: 1.7;
+}
+.muted {
+  color: var(--muted);
+}
+.quick {
+  border-left: 3px solid var(--kind-supervisor);
+  padding: 8px 10px;
+  background: #fff;
+  border-radius: 0 6px 6px 0;
+  margin-top: 10px;
+}
+.quick-title {
+  color: var(--kind-supervisor);
+}
+.preset {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 6px 9px;
+  margin-top: 6px;
+  background: var(--paper2);
+  cursor: pointer;
+}
+.preset.on {
+  border-color: var(--kind-supervisor);
+  background: #f7eaea;
+}
+.preset b {
+  font-size: 12.5px;
+}
+.preset span {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+}
+.paths {
+  margin-top: 14px;
+}
+.rel {
+  font-size: 12px;
+  margin-top: 10px;
+  color: var(--muted);
+  line-height: 1.7;
+}
+.rel .link {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: var(--kind-worker);
+  text-decoration: underline;
+  cursor: pointer;
+}
+.rel .nobody {
+  color: var(--kind-supervisor);
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 2px 4px 2px 9px;
+  font-size: 12px;
+  font-family: var(--mono);
+}
+.chip button {
+  border: 0;
+  background: none;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1;
+}
+.field .chip-input {
+  width: 110px;
+  margin-top: 0;
+  border-radius: 14px;
+  padding: 2px 9px;
+  font: 12px var(--mono);
+}
+
+/* "Antes de exportar" (FR-20). */
+.prexp {
+  position: absolute;
+  right: 14px;
+  bottom: 12px;
+  z-index: 5;
+  width: 330px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-left: 4px solid #e2b04a;
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 12px;
+}
+.prexp.errors {
+  border-left-color: var(--kind-supervisor);
+}
+.prexp .title {
+  color: var(--kind-supervisor);
+}
+.prexp ul {
+  margin: 6px 0 0;
+  padding-left: 16px;
+  line-height: 1.55;
+}
+.prexp li button {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.prexp li button:hover {
+  text-decoration: underline;
+}
+.prexp li.err {
+  color: var(--kind-supervisor);
+}
+.prexp li.more {
+  color: var(--muted);
+  list-style: none;
+  margin-left: -16px;
+}

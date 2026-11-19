@@ -2,6 +2,8 @@
 // Graph: cada ação chama um caso de uso e grava o resultado no histórico (FR-08).
 import {
   addNode,
+  amend,
+  type BarPresetId,
   autoLayout,
   canRedo,
   canUndo,
@@ -21,6 +23,11 @@ import {
   type History,
   type LayoutEngine,
   moveNode,
+  type NodePatch,
+  setEdgeCondition,
+  toggleBarPreset,
+  updateGraph,
+  updateNode,
   type NodeId,
   type NodeKind,
   ok,
@@ -96,8 +103,12 @@ export class Editor {
   }
 
   /** Grava o resultado como um passo; comando recusado vira toast (FR-08). */
+  /** Campo em edição: as edições seguintes dele emendam o mesmo passo (FR-08, L05). */
+  private editKey: string | null = null;
+
   private commit(result: EditResult): boolean {
     if (!result.ok) return this.refuse(result.error);
+    this.editKey = null;
     this.history = record(this.history, result.value);
     return true;
   }
@@ -198,13 +209,61 @@ export class Editor {
     return this.commit(autoLayout(this.ctx, this.graph, this.layoutEngine));
   }
 
+  /**
+   * Edição de um campo de texto (FR-10..14). A 1ª edição de `key` abre um passo; as seguintes o
+   * emendam. Recusa não vira toast: o campo mostra o erro (devolvido aqui).
+   */
+  private edit(key: string, result: EditResult): DomainError | null {
+    if (!result.ok) return result.error;
+    if (result.value === this.graph) return null;
+    this.history =
+      this.editKey === key ? amend(this.history, result.value) : record(this.history, result.value);
+    this.editKey = key;
+    return null;
+  }
+
+  /** O campo perdeu o foco: a próxima edição abre outro passo. */
+  endEdit(): void {
+    this.editKey = null;
+  }
+
+  /** FR-11..15: nome, instruções, rodadas. `field` separa os passos de desfazer. */
+  editNode(id: NodeId, field: keyof NodePatch, patch: NodePatch): DomainError | null {
+    return this.edit(`node:${id}:${field}`, updateNode(this.ctx, this.graph, id, patch));
+  }
+
+  /** FR-10: nome e objetivo do grafo. */
+  editGraph(
+    field: 'name' | 'objective',
+    patch: { name?: string; objective?: string },
+  ): DomainError | null {
+    return this.edit(`graph:${field}`, updateGraph(this.ctx, this.graph, patch));
+  }
+
+  /** FR-13. */
+  editCondition(id: EdgeId, condition: string): DomainError | null {
+    return this.edit(`edge:${id}`, setEdgeCondition(this.ctx, this.graph, id, condition));
+  }
+
+  /** Mudança discreta (select, chip, preset): um passo por clique. */
+  updateNode(id: NodeId, patch: NodePatch): boolean {
+    return this.commit(updateNode(this.ctx, this.graph, id, patch));
+  }
+
+  /** FR-12. */
+  togglePreset(id: NodeId, preset: BarPresetId): boolean {
+    return this.commit(toggleBarPreset(this.ctx, this.graph, id, preset));
+  }
+
   /** FR-08. */
   undo(): void {
+    this.editKey = null;
     this.history = undo(this.history);
     this.dropMissing();
   }
 
   redo(): void {
+    this.editKey = null;
     this.history = redo(this.history);
     this.dropMissing();
   }
