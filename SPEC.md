@@ -198,6 +198,8 @@ Formato: **FR-xx** · descrição · critérios de aceite (Dado/Quando/Então).
 - **FR-01 Adicionar peça** pela paleta (clique adiciona no centro visível; arrastar solta na posição).
   - Dado um grafo com uma Entrada, quando clico em "Entrada", então a peça não é criada e aparece toast "Só uma Entrada por grafo".
   - Nome automático `"{Tipo} {n}"` com `n` = menor inteiro livre.
+  - O clique põe o canto da peça no centro visível, na grade de 16 px; se já houver peça nesse
+    ponto, desce +32 px em x e y até achar um livre (como o FR-05). A peça nova fica selecionada.
 - **FR-02 Ligar peças** arrastando do ponto direito de uma peça até o ponto esquerdo de outra.
   - Ligação inválida (INV-02..06) mostra o alvo em vermelho durante o arraste e não cria o fio.
 - **FR-03 Cortar fio** em 2 passos (Q5): o 1º clique seleciona o fio (fica destacado); um 2º clique
@@ -205,8 +207,18 @@ Formato: **FR-xx** · descrição · critérios de aceite (Dado/Quando/Então).
 - **FR-04 Apagar peça** com `Del`/`Backspace` ou botão "Apagar" no inspetor; remove fios ligados. Desfazível.
 - **FR-05 Duplicar peça** com `Ctrl/⌘+D`: copia tipo, instruções e configs; deslocamento +32px; nome com próximo `n`. Não copia fios.
 - **FR-06 Mover peça** por arraste; snap opcional na grade de 16px.
+  - O snap começa ligado; o botão **Grade** no rodapé do canvas liga e desliga. A posição vai ao
+    grafo ao soltar a peça (um passo de desfazer por arraste).
 - **FR-07 Controles de visão** (rodapé do canvas): zoom −/+ com % (25–200%), **Enquadrar** (fit view), **Arrumar** (auto-layout esquerda→direita), **Foco** (oculta paleta e inspetor).
+  - − e + mudam o zoom em 10 pontos percentuais, presos à faixa 25–200%. **Arrumar** é desfazível.
+- **FR-09 Desenho dos fios** (§3.3): fio comum em linha cheia com seta; fio de Memória
+  (`MemoryWrite`/`MemoryRead`) pontilhado cinza; retorno implícito do Supervisor tracejado
+  vermelho, saindo do topo do Supervisor até o ponto dourado do construtor, sem seleção nem corte.
+  Fio armado para corte (FR-03) fica destacado.
 - **FR-08 Desfazer/Refazer** `Ctrl/⌘+Z` / `Ctrl/⌘+Shift+Z`, histórico ≥ 100 passos, por grafo, em memória.
+  - Atalhos de teclado (FR-03..05, FR-08) não agem com o foco num campo de texto.
+  - Comando recusado pelo domínio (ex.: INV-01 ao adicionar ou duplicar a Entrada) mostra um
+    toast com o motivo e não altera o grafo.
 
 ### Inspetor (painel direito)
 - **FR-10 Sem seleção** → inspetor do Grafo: nome do grafo, **Objetivo** (textarea), resumo (contagem por tipo).
@@ -485,13 +497,18 @@ Entrega `#2F5D3A` · Decisão `#5B3A7A` · Memória `#3E4C59`. Fundo papel `#F3E
 | 01 | `feature/layer-01-domain` | model, INV-01..08, derivação de fio, topo sort, VAL-01..10 | testes de domínio ≥ 90% | `v0.1.0` |
 | 02 | `feature/layer-02-application` | casos de uso + portas + undo/redo | testes de casos de uso | `v0.2.0` |
 | 03 | `feature/layer-03-infrastructure` | zod schema, JSON codec, PromptRenderer (golden tests), IndexedDB repo, dagre | golden files do §6 batem | `v0.3.0` |
-| 04 | `feature/layer-04-ui-canvas` | canvas, paleta, peças, fios, controles de visão | Playwright: criar/ligar/cortar/duplicar | `v0.4.0` |
+| 04 | `feature/layer-04-ui-canvas` | canvas, paleta, peças, fios, controles de visão, desfazer/refazer (FR-01..09) | Playwright: criar/ligar/cortar/duplicar | `v0.4.0` |
 | 05 | `feature/layer-05-ui-panels` | inspetores M2–M5, painel "Antes de exportar" | Playwright: validação ao vivo | `v0.5.0` |
 | 06 | `feature/layer-06-ui-io` | modais M6–M8, Meus grafos, autosave | Playwright: export→import ida e volta | `v1.0.0` |
+
+Escopo da L04: o grafo fica só em memória (salvamento automático e botões do topo na L06); o
+painel direito mostra um texto provisório (inspetor na L05).
 
 Merge em `develop` ao fim de cada camada; `master` (branch principal) só em `v1.0.0`.
 
 ### 9.1 Gates (rodar em terminal ZSH separado, saída em `/tmp/gates.txt`)
+O e2e (`bun run --filter ui e2e`, a partir da L04) usa o Google Chrome instalado
+(`channel: 'chrome'`, NFR-08); Firefox e Safari entram na L06.
 ```zsh
 { bun run --filter '*' typecheck && bun run --filter '*' lint && bun run --filter '*' test --coverage && bun run --filter ui e2e ; } 2>&1 | tee /tmp/gates.txt
 ```
