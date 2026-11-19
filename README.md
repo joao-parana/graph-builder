@@ -10,6 +10,11 @@ decide, o que se lembra — e exportá-los como:
 O app **não executa** o grafo: ele modela e gera a especificação; quem executa é o Claude. Nada sai
 do navegador — os grafos ficam no IndexedDB local.
 
+> **v2 em desenvolvimento** ([ADR-0004](docs/adr/0004-conta-e-nuvem-com-supabase.md)): um modo
+> **nuvem** opcional, com login pelo GitHub e grafos guardados no Supabase, só para convidados. O
+> modo local continua como está. A base (banco, RLS e adaptadores no core) entrou na `v1.2.0`; a
+> interface ainda não mudou.
+
 - Contrato (fonte da verdade): [`SPEC.md`](SPEC.md)
 - Decisões de arquitetura: [`docs/adr/`](docs/adr)
 - Mockups das telas M1–M8: [`docs/mockups/mockups.html`](docs/mockups/mockups.html)
@@ -80,8 +85,9 @@ bun run --filter ui dev
 Regras do projeto (detalhes em [`CLAUDE.md`](CLAUDE.md)):
 
 - **SDD:** nenhuma mudança de comportamento sem atualizar o `SPEC.md` antes.
-- **Git flow:** trabalho novo em `feature/…` ou `fix/…` a partir da `develop`; a release vai para a
-  `master` com tag `vX.Y.Z`; o campo `version` dos três `package.json` acompanha a tag.
+- **Git flow:** trabalho novo em `feature/…` ou `fix/…` a partir da `develop`. Cada camada termina
+  com merge na `develop` e tag `vX.Y.Z`; a release vai para a `master`, que publica no GitHub
+  Pages. O campo `version` dos três `package.json` acompanha a tag.
 - Textos da UI em pt-BR, todos em `ui/src/lib/i18n/pt-BR.ts`; identificadores em inglês.
 - Core sem exceções: `Result<T, DomainError>`. UI com runes (`$state`, `$derived`), sem stores legados.
 - Imports da UI por `#lib/...` (o SvelteKit 3 removeu `$lib`).
