@@ -4,7 +4,7 @@
   import { ptBR } from '#lib/i18n/pt-BR.ts';
   import Modal from '#lib/Modal.svelte';
 
-  let { onclose }: { onclose: () => void } = $props();
+  let { cloud = false, onclose }: { cloud?: boolean; onclose: () => void } = $props();
   const t = ptBR.help;
   const kinds = Object.values(NodeKind);
 </script>
@@ -30,6 +30,10 @@
       <dd>{what}</dd>
     {/each}
   </dl>
+  {#if cloud}
+    <h3 class="label">{ptBR.cloud.helpTitle}</h3>
+    <p>{ptBR.cloud.helpText}</p>
+  {/if}
 </Modal>
 
 <style>
@@ -56,6 +60,10 @@
   ul {
     margin: 0;
     padding-left: 18px;
+    font-size: 13px;
+  }
+  p {
+    margin: 0;
     font-size: 13px;
   }
   kbd {

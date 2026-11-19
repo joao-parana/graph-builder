@@ -230,6 +230,30 @@ export const ptBR = {
       ['Esc', 'cancela o fio selecionado'],
     ],
   },
+  /** Conta e nuvem (v2, FR-50..56, M9, M10). */
+  cloud: {
+    signIn: 'Entrar com GitHub',
+    signingIn: 'Entrando…',
+    where: 'Onde salvar',
+    modes: { local: 'Neste navegador', cloud: 'Na nuvem' },
+    needsSignIn: 'Entre com o GitHub para usar a nuvem',
+    login: (login: string) => `@${login}`,
+    accountMenu: (login: string) => `Conta @${login}`,
+    signOut: 'Sair',
+    libraryTitle: { local: 'Meus grafos — neste navegador', cloud: 'Meus grafos — na nuvem' },
+    copyTo: { local: 'Copiar para este navegador', cloud: 'Copiar para a nuvem' },
+    copied: { local: 'Copiado para este navegador', cloud: 'Copiado para a nuvem' },
+    moreActions: 'Mais ações',
+    notInvited: 'Sua conta do GitHub não tem acesso à nuvem. Peça um convite.',
+    signInFailed: 'Não foi possível entrar agora. Tente de novo.',
+    saveFailed: (reason: string) => `Não foi possível salvar na nuvem: ${reason}`,
+    offline: 'Sem conexão: as mudanças serão salvas quando a conexão voltar.',
+    expired: 'Sua sessão expirou. Entre de novo.',
+    keptLocally: 'O grafo não salvo na nuvem foi guardado neste navegador.',
+    helpTitle: 'Conta e nuvem',
+    helpText:
+      'Sem conta, os grafos ficam só neste navegador. Com o GitHub, convidados guardam grafos na nuvem e os abrem em outro computador. Em Meus grafos, copie um grafo de um lugar para o outro.',
+  },
   /** Motivo mostrado no toast quando o domínio recusa um comando (FR-08). */
   errors: {
     'INV-01': 'Só uma Entrada por grafo',

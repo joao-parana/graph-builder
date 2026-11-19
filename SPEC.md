@@ -3,7 +3,7 @@
 > **Status:** Draft v0.1 · **Data:** 2026-11-13 · **Dono:** João
 > **v2 (proposta, 2026-11-19, ADR-0004):** conta e grafos na nuvem com Supabase — §1, §1.3, §2,
 > FR-50..56, NFR-05/09/10, §7.1–§7.4, §9 (L07–L09), §10, §12 (Q7–Q9). Nada da v2 é implementado
-> antes de o ADR-0004 ser aceito; Q7 resolvida, Q8 e Q9 até a L08.
+> antes de o ADR-0004 ser aceito (aceito em 2026-11-19); Q7, Q8 e Q9 resolvidas.
 > **Contrato:** este arquivo é a fonte da verdade. Mudança de comportamento = mudança aqui primeiro.
 > **Origem:** inspirado na ferramenta mostrada em <https://www.youtube.com/watch?v=r8JueeaKJ9w>.
 > A página do vídeo não pôde ser lida; esta spec foi derivada de uma captura de tela.
@@ -333,36 +333,62 @@ do modal e volta ao botão que o abriu. Atalhos do editor não agem com um modal
 ### Conta e nuvem (v2, ADR-0004)
 Valem só quando o build tem o Supabase configurado (§9.2). Sem ele, o app é a v1: nada desta seção
 aparece.
-- **FR-50 Entrar com GitHub:** botão "Entrar" no topo, no modo local.
-  - Dado o modo local, quando o usuário clica em "Entrar", então vai ao GitHub (OAuth via Supabase,
+- **FR-50 Entrar com GitHub:** botão "Entrar com GitHub" no topo, sem sessão (M9).
+  - Dado o modo local, quando o usuário clica em "Entrar com GitHub", então vai ao GitHub (OAuth via Supabase,
     PKCE) e volta para a raiz do app.
   - Na volta com sucesso: o topo mostra o login do GitHub (e o avatar, se houver); o modo passa a
     "Na nuvem"; abre o grafo mais recente da nuvem ou, sem nenhum, cria um e o salva (como FR-30).
   - A URL perde os parâmetros do retorno (`?code=…`) sem recarregar a página.
   - O grafo local que estava aberto é gravado antes de sair para o GitHub.
+  - Enquanto o app troca o `?code=` pela sessão, o botão mostra "Entrando…" e fica desabilitado.
+  - Falha na troca (rede, servidor): fica no modo local, toast "Não foi possível entrar agora. Tente
+    de novo.".
 - **FR-51 Acesso negado:** conta do GitHub sem convite (ou login cancelado).
   - Sem convite, o Supabase volta com `error_code=signup_disabled` (Q7); cancelado no GitHub, com
     `error=access_denied` sem esse código. Os parâmetros podem vir na query ou no fragmento (`#`).
   - O app fica no modo local, sem sessão, e mostra: "Sua conta do GitHub não tem acesso à nuvem.
     Peça um convite." (cancelado: nenhuma mensagem). Nenhum dado local muda.
-- **FR-52 Sair:** menu do usuário no topo → "Sair".
+- **FR-52 Sair:** menu do usuário no topo (avatar + `@login`) → "Sair" (M9).
   - Grava o que estiver pendente na nuvem, encerra a sessão, volta ao modo local e abre o grafo
     local mais recente (FR-30).
-- **FR-53 Trocar de modo:** seletor "Neste navegador | Na nuvem" no topo; "Na nuvem" só com sessão.
+- **FR-53 Trocar de modo:** seletor "Neste navegador | Na nuvem" no topo (rótulo acessível "Onde
+  salvar", M9); "Na nuvem" só com sessão — sem ela, fica desabilitado com a dica "Entre com o GitHub
+  para usar a nuvem".
   - Trocar grava antes o que estiver pendente, zera o histórico e abre o grafo mais recente do modo
     escolhido (como trocar de grafo, FR-30).
-  - O navegador lembra o último modo; ao iniciar com sessão válida, abre nele.
-  - "Meus grafos" (FR-31) lista só os grafos do modo atual e diz qual é no título.
+  - O navegador lembra o último modo (Q8); ao iniciar com sessão válida, abre nele.
+  - "Meus grafos" (FR-31) lista só os grafos do modo atual e diz qual é no título: "Meus grafos —
+    neste navegador" ou "Meus grafos — na nuvem" (M10).
 - **FR-54 Copiar entre modos:** em "Meus grafos", ação por linha "Copiar para a nuvem" (modo local,
   com sessão) ou "Copiar para este navegador" (modo nuvem).
   - A cópia ganha `GraphId` novo, o mesmo nome e `updatedAt = now`; o original não muda; a cópia não
     abre. Toast "Copiado para a nuvem" / "Copiado para este navegador".
+  - Quando a ação de cópia aparece, Renomear, Duplicar e Apagar vão para um menu "⋯" (rótulo
+    acessível "Mais ações") na linha, para caber; sem sessão no modo local, a linha fica como no M7.
 - **FR-55 Salvamento na nuvem:** mesmo comportamento do FR-30 (debounce 500 ms, indicador, viewport).
-  - Falha de rede ou do Supabase: "não salvo" + toast do motivo; a edição continua em memória e o
+  - Falha de rede ou do Supabase: "não salvo" + toast "Não foi possível salvar na nuvem: {motivo}";
+    sem conexão, o toast é "Sem conexão: as mudanças serão salvas quando a conexão voltar."; a edição continua em memória e o
     salvamento é tentado de novo na próxima mudança e quando o navegador volta a ficar online.
 - **FR-56 Sessão expirada:** se a sessão não puder ser renovada, o indicador fica "não salvo", o
-  toast diz "Sua sessão expirou. Entre de novo." e o topo volta a mostrar "Entrar".
-  - O grafo aberto continua em memória; ao entrar de novo com a mesma conta, ele é gravado na nuvem.
+  toast diz "Sua sessão expirou. Entre de novo." e o topo volta a mostrar "Entrar com GitHub".
+  - O grafo aberto continua em memória. Entrar de novo leva ao GitHub e recarrega o app, o que
+    perderia a memória; por isso, ao clicar "Entrar com GitHub" com o indicador "não salvo" no modo
+    nuvem, o app antes guarda o grafo aberto neste navegador (mesmo `GraphId`) e avisa "O grafo não
+    salvo na nuvem foi guardado neste navegador.".
+  - Na volta, o modo nuvem abre o grafo mais recente da nuvem; o guardado fica em "Meus grafos —
+    neste navegador", de onde pode ser copiado para a nuvem (FR-54).
+
+Textos da v2 (NFR-06: em `ui/src/lib/i18n/pt-BR.ts`, na chave `cloud`):
+
+| Onde | Texto |
+|---|---|
+| Botão de login (FR-50) | "Entrar com GitHub"; durante a troca do código: "Entrando…" |
+| Seletor de modo (FR-53) | rótulo "Onde salvar"; opções "Neste navegador" e "Na nuvem"; dica sem sessão: "Entre com o GitHub para usar a nuvem" |
+| Menu do usuário (FR-52) | "@{login}" (rótulo acessível "Conta @{login}"); item "Sair" |
+| Título de "Meus grafos" (FR-53) | "Meus grafos — neste navegador" / "Meus grafos — na nuvem" |
+| Ação por linha (FR-54) | "Copiar para a nuvem" / "Copiar para este navegador"; menu "⋯" com rótulo "Mais ações" |
+| Toasts | "Copiado para a nuvem"; "Copiado para este navegador"; "Sua conta do GitHub não tem acesso à nuvem. Peça um convite."; "Não foi possível entrar agora. Tente de novo."; "Não foi possível salvar na nuvem: {motivo}"; "Sem conexão: as mudanças serão salvas quando a conexão voltar."; "Sua sessão expirou. Entre de novo."; "O grafo não salvo na nuvem foi guardado neste navegador." |
+| Ajuda (FR-40) | seção "Conta e nuvem": "Sem conta, os grafos ficam só neste navegador. Com o GitHub, convidados guardam grafos na nuvem e os abrem em outro computador. Em Meus grafos, copie um grafo de um lugar para o outro." |
 
 ---
 
@@ -628,6 +654,8 @@ Ver `docs/mockups/mockups.html` (abrir no navegador). Telas:
 | M6 | Modal "Exportar para a IA" (abas Prompt/JSON) | FR-21 |
 | M7 | Modal "Meus grafos" | FR-31 |
 | M8 | Modal "Abrir JSON" com erro de validação | FR-22 |
+| M9 | Topo com conta (v2): sem sessão, entrando, na nuvem com menu do usuário, aviso de acesso negado | FR-50..53, FR-56 |
+| M10 | "Meus grafos" por modo (v2): neste navegador e na nuvem, com a cópia entre modos | FR-53, FR-54 |
 
 Paleta de cores por tipo (borda/selo): Entrada `#B08A2E` · Trabalhador `#1F3A5F` · Supervisor `#8B2323` ·
 Entrega `#2F5D3A` · Decisão `#5B3A7A` · Memória `#3E4C59`. Fundo papel `#F3EEE4`, grade pontilhada.
@@ -657,7 +685,7 @@ Escopo da L05: inspetor (FR-10..15) e painel "Antes de exportar" (FR-20); export
 Escopo da L04: o grafo fica só em memória (salvamento automático e botões do topo na L06); o
 painel direito mostra um texto provisório (inspetor na L05).
 
-Escopo da v2 (L07–L09): §1.3, FR-50..56, NFR-09/10, §7.4. Antes da L07: Q7 resolvida; Q8 e Q9 até a L08 (§12).
+Escopo da v2 (L07–L09): §1.3, FR-50..56, NFR-09/10, §7.4. Q7, Q8 e Q9 resolvidas (§12); variáveis do build em §9.3.
 
 Merge em `develop` ao fim de cada camada; `master` (branch principal) só em `v1.0.0`.
 
@@ -683,8 +711,33 @@ vem da variável de ambiente `BASE_PATH` (`kit.paths.base`): o workflow usa `/gr
 origem `joao-parana.github.io` (banco `graph-builder`).
 - **v2 (L09):** o build do modo nuvem recebe `PUBLIC_SUPABASE_URL` e `PUBLIC_SUPABASE_KEY` (chave
   pública) como *variables* do GitHub Actions. Sem elas, o build é só local (FR-50). No Supabase, as
-  URLs de retorno permitidas são `https://joao-parana.github.io/graph-builder/` e as de dev/preview
-  (`http://localhost:5173/`, `http://localhost:4173/`).
+  URLs de retorno permitidas são `https://joao-parana.github.io/graph-builder/` e as de dev/preview.
+  - Local, o login usa `127.0.0.1`, não `localhost`: o Supabase local manda ao GitHub o callback
+    `http://127.0.0.1:54321/auth/v1/callback` (o do OAuth App de dev tem que ser igual), e o Safari
+    pode forçar `https://` em `localhost` (HSTS guardado de outro app).
+  - O `dev:cloud` ouve em `127.0.0.1:5173` e a `site_url` local é `http://127.0.0.1:5173/`; as
+    voltas permitidas são `127.0.0.1` e `localhost` nas portas 5173 (dev) e 4173 (preview/e2e).
+
+### 9.3 Variáveis do build (v2, L08)
+- Declaradas em `ui/src/env.ts` com `defineEnvVars` (SvelteKit 3; o `$env/static/public` está
+  deprecado) e lidas de `$app/env/public`:
+
+  | Variável | Valor | Config |
+  |---|---|---|
+  | `PUBLIC_SUPABASE_URL` | URL do projeto (`http(s)://…`) | `public: true`, `static: true`, opcional |
+  | `PUBLIC_SUPABASE_KEY` | chave pública (`sb_publishable_…` ou a `anon` antiga) | `public: true`, `static: true`, opcional |
+
+- `static: true`: o valor entra no bundle no build. O código da nuvem (`supabase-js` e adaptadores)
+  fica num chunk à parte, carregado por `import()` só quando as duas existem; sem elas, o app não o
+  baixa e é a v1.
+- O modo nuvem só existe com **as duas** preenchidas. Só uma preenchida é erro de configuração: o
+  build falha com a mensagem "Defina PUBLIC_SUPABASE_URL e PUBLIC_SUPABASE_KEY juntas (ou nenhuma)".
+- O `schema` da URL rejeita o que não for `http://` ou `https://`; a *service role key*
+  (`sb_secret_…` ou JWT com `role: service_role`) é rejeitada no build (NFR-09).
+- A volta do login (`redirectTo`) é a raiz do app: origem + `kit.paths.base` + `/`.
+- **Dev e e2e com nuvem:** os valores vêm do `supabase status` local, por script
+  (`bun run --filter ui dev:cloud`), nunca de arquivo versionado. Arquivos `.env*` ficam no
+  `.gitignore`.
 
 ---
 
@@ -692,7 +745,7 @@ origem `joao-parana.github.io` (banco `graph-builder`).
 - **Domínio:** tabela de casos para cada INV e VAL; testes de propriedade (fast-check) para "nenhum comando aceito produz grafo que viola invariante".
 - **Renderer:** golden files em `packages/core/test/golden/*.md`; determinismo testado renderizando 2× com nós embaralhados.
 - **Codec:** round-trip `Graph → JSON → Graph` idêntico; JSONs inválidos de exemplo com mensagens esperadas.
-- **E2E (Playwright):** fluxos M1–M8.
+- **E2E (Playwright):** fluxos M1–M10 (M9 e M10 com o Supabase local, Q9).
 - **Nuvem (v2, NFR-10):** os mesmos testes de contrato do `GraphRepository` rodam no IndexedDB
   (fake) e no `SupabaseGraphRepository` (Supabase local); testes de RLS com dois usuários (um não lê,
   não grava e não apaga o grafo do outro; sem sessão, nada); e2e do modo nuvem com sessão injetada
@@ -724,6 +777,6 @@ origem `joao-parana.github.io` (banco `graph-builder`).
 | Q4 | Gerenciador de pacotes: pnpm ou bun? | **Resolvida:** Bun ≥ 1.3, só para pacotes e scripts (ADR-0002) | L00 |
 | Q5 | Cortar fio com 1 clique (como diz a ajuda original) ou 2? | **Resolvida:** 2 passos (clique seleciona; 2º clique ou `Del` remove) + undo (FR-03) | L04 |
 | Q7 | Com cadastro fechado, o login pelo GitHub entra no usuário convidado por e-mail (vínculo automático de identidades)? | **Resolvida** (código do `supabase/auth` v2.198.0, ADR-0004): sim, se o e-mail do convite for um dos e-mails **verificados** da conta do GitHub; o convidado não precisa abrir o convite. Sem convite → `signup_disabled`. Sem *auth hook*. Conferir à mão no gate da L08 (Supabase local + OAuth App de dev) | L07 |
-| Q8 | Onde o navegador lembra o último modo (FR-53)? | `localStorage` (`graph-builder:mode`); sem sessão válida, sempre local | L08 |
-| Q9 | Como o e2e entra na nuvem, se o GitHub OAuth não é automatizável? | O teste cria o usuário pela API admin do Supabase local e injeta a sessão (`storageState`); o botão "Entrar" só é conferido até o redirecionamento | L08 |
+| Q8 | Onde o navegador lembra o último modo (FR-53)? | **Resolvida:** `localStorage`, chave `graph-builder:mode`, valor `local` ou `cloud`; gravado a cada troca de modo. Ao iniciar: `cloud` com sessão válida → nuvem; qualquer outro caso (sem sessão, valor ausente ou inválido, storage bloqueado) → local. É preferência do navegador, não vai para a nuvem | L08 |
+| Q9 | Como o e2e entra na nuvem, se o GitHub OAuth não é automatizável? | **Resolvida:** o e2e da nuvem roda contra o Supabase local, com o build feito com as variáveis do `supabase status` (§9.3). Cada teste cria um usuário pela API admin (*service role key* local, só no processo do Playwright), entra com senha pelo `supabase-js` no Node e injeta a sessão no `localStorage` do navegador (`addInitScript`, na chave padrão do `supabase-js`) antes de abrir o app; apaga o usuário no fim. O botão "Entrar com GitHub" é conferido só até o pedido a `/auth/v1/authorize?provider=github` (interceptado com `page.route`, sem ir ao GitHub). Sem o Supabase local, esses testes são pulados com aviso | L08 |
 | Q6 | Presets extras além de "Resultado WOW" e "Sem erros" | **Resolvida:** os 4 presets do FR-12, com ids e textos definidos (o `ToggleBarPreset` da L02 precisa deles) | L05 |

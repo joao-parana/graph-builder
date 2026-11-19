@@ -7,17 +7,18 @@ decide, o que se lembra — e exportá-los como:
    Desktop), que descreve o fluxo, os papéis e os critérios de aprovação; e
 2. um **JSON versionado** e reimportável, que é também o formato de persistência do grafo.
 
-O app **não executa** o grafo: ele modela e gera a especificação; quem executa é o Claude. Nada sai
-do navegador — os grafos ficam no IndexedDB local.
+O app **não executa** o grafo: ele modela e gera a especificação; quem executa é o Claude. No modo
+local (o padrão), nada sai do navegador — os grafos ficam no IndexedDB.
 
 > **v2 em desenvolvimento** ([ADR-0004](docs/adr/0004-conta-e-nuvem-com-supabase.md)): um modo
 > **nuvem** opcional, com login pelo GitHub e grafos guardados no Supabase, só para convidados. O
-> modo local continua como está. A base (banco, RLS e adaptadores no core) entrou na `v1.2.0`; a
-> interface ainda não mudou.
+> modo local continua como está. A base (banco, RLS, adaptadores) entrou na `v1.2.0`; a interface
+> (entrar, "Onde salvar", cópia entre modos) na `v1.3.0`, testada contra o Supabase local. Falta
+> publicar a nuvem de produção (L09); até lá, o build do Pages é só local.
 
 - Contrato (fonte da verdade): [`SPEC.md`](SPEC.md)
 - Decisões de arquitetura: [`docs/adr/`](docs/adr)
-- Mockups das telas M1–M8: [`docs/mockups/mockups.html`](docs/mockups/mockups.html)
+- Mockups das telas M1–M10: [`docs/mockups/mockups.html`](docs/mockups/mockups.html)
 - Estado da última sessão de desenvolvimento: [`HANDOFF.md`](HANDOFF.md)
 
 ## Peças
@@ -42,7 +43,11 @@ packages/core/          # TypeScript puro (Clean Architecture)
   src/infrastructure/   # schema zod, codec JSON, PromptRenderer, IndexedDB (idb-keyval), dagre, Supabase
 supabase/               # v2 (ADR-0004): config do Supabase local e migrations (tabela graphs + RLS)
 ui/                     # SvelteKit 3 (SPA estático) + Svelte 5 (runes) + @xyflow/svelte
-  src/lib/              # canvas, paleta, inspetor, modais, estado do editor
+  src/env.ts            # variáveis PUBLIC_SUPABASE_* do build (v2, SPEC §9.3)
+  src/lib/              # canvas, paleta, inspetor, modais, estado do editor e da sessão
+  src/lib/account/      # v2: seletor "Onde salvar" e botão da conta
+  src/lib/cloud/        # v2: configuração e adaptadores da nuvem (carregados sob demanda)
+  scripts/dev-cloud.ts  # v2: `dev:cloud`, o dev ligado ao Supabase local
   e2e/                  # Playwright
 ```
 
@@ -82,6 +87,9 @@ Servidor de desenvolvimento com recarga automática em <http://localhost:5173>:
 bun run --filter ui dev
 ```
 
+Esse é o app da v1, só com o modo local. Para desenvolver o modo nuvem, veja
+[Modo nuvem no desenvolvimento](#modo-nuvem-no-desenvolvimento).
+
 Regras do projeto (detalhes em [`CLAUDE.md`](CLAUDE.md)):
 
 - **SDD:** nenhuma mudança de comportamento sem atualizar o `SPEC.md` antes.
@@ -98,6 +106,86 @@ Formatação:
 ```bash
 bun run format
 ```
+
+## Modo nuvem no desenvolvimento
+
+O modo nuvem (v2) roda contra o **Supabase local** do CLI, em Docker; nada aponta para o projeto de
+produção. Os testes automáticos não precisam de GitHub (a sessão é injetada, Q9). O login real pelo
+GitHub precisa de um **OAuth App de desenvolvimento** e de um **usuário convidado** no Studio.
+
+Endereços do Supabase local: API <http://127.0.0.1:54321>, Studio <http://127.0.0.1:54323>,
+Mailpit (e-mails de convite) <http://127.0.0.1:54324>.
+
+> Use **`127.0.0.1`**, não `localhost`, em todo o fluxo de login: o Supabase local manda ao GitHub o
+> callback em `127.0.0.1`, e o Safari pode forçar `https://` em `localhost` (veja
+> [Problemas resolvidos](#problemas-resolvidos)).
+
+### 1. Criar o OAuth App de desenvolvimento (uma vez por pessoa)
+
+1. No GitHub: **Settings → Developer settings → OAuth Apps → New OAuth App**.
+2. Preencha:
+   - **Application name:** `Graph Builder (dev)`
+   - **Homepage URL:** `http://127.0.0.1:5173`
+   - **Authorization callback URL:** `http://127.0.0.1:54321/auth/v1/callback`
+3. **Register application**, depois **Generate a new client secret**. Guarde o *Client ID* e o
+   *Client secret* fora do repositório (gerenciador de senhas).
+
+### 2. Subir o Supabase local com o GitHub
+
+No **mesmo terminal**, na raiz do repositório (o `db:start` lê as variáveis desta shell):
+
+```bash
+export SUPABASE_AUTH_EXTERNAL_GITHUB_CLIENT_ID=<client id> SUPABASE_AUTH_EXTERNAL_GITHUB_SECRET=<client secret>
+```
+
+```bash
+bun run db:stop && bun run db:start
+```
+
+Sem as duas variáveis, o banco sobe igual e os testes passam; só o login real pelo GitHub falha. Se
+o Supabase já estava no ar, o `db:stop` é necessário para ele ler as variáveis e o
+`supabase/config.toml`. O `db:stop` guarda o banco (usuários e grafos continuam); o `db:reset`
+apaga tudo.
+
+### 3. Convidar um usuário no Studio
+
+O cadastro está fechado (`enable_signup = false`): só entra quem foi cadastrado antes. Quando o
+app diz "Sua conta do GitHub não tem acesso à nuvem. Peça um convite.", é este passo que falta.
+
+1. Abra o Studio em <http://127.0.0.1:54323> → **Authentication → Users → Add user**.
+2. Escolha uma das opções:
+   - **Create new user:** informe o e-mail, uma senha qualquer (o login é pelo GitHub; a senha não
+     é usada) e marque **Auto Confirm User**;
+   - **Send invitation:** informe o e-mail; o convite cai no Mailpit e ninguém precisa abri-lo.
+3. Use um e-mail **verificado na conta do GitHub** da pessoa (qualquer um deles, não só o
+   principal; confira em <https://github.com/settings/emails>). No primeiro login, o Supabase liga a
+   identidade do GitHub a esse usuário (Q7 no ADR-0004).
+
+Na produção (L09), o convite é igual, no painel do projeto em <https://supabase.com/dashboard>.
+
+### 4. Rodar o app com a nuvem
+
+Em outro terminal (não precisa das variáveis do OAuth App):
+
+```bash
+bun run --filter ui dev:cloud
+```
+
+O script lê a URL e a chave pública do `supabase status`, passa as duas ao Vite como
+`PUBLIC_SUPABASE_URL` e `PUBLIC_SUPABASE_KEY` (nunca por arquivo versionado) e ouve em
+<http://127.0.0.1:5173/>. Abra esse endereço e clique em **Entrar com GitHub**: na volta, o topo
+mostra `@seu-login` e "Onde salvar" fica em **Na nuvem**.
+
+### 5. Ver os grafos guardados
+
+- **No app:** **Meus grafos** com "Na nuvem" ativo ("Meus grafos — na nuvem"); o RLS mostra só os
+  seus.
+- **No Studio:** **Table Editor** → schema `public` → tabela `graphs`. Cada linha tem `owner_id`,
+  `name`, `node_count`, `updated_at` e o grafo inteiro em `data` (o mesmo JSON do "Exportar"). O
+  Studio entra como administrador e mostra os grafos de todos os usuários.
+
+Apagar o usuário em **Authentication → Users** apaga também os grafos dele (`on delete cascade`). Para
+conferir o acesso negado: **Sair**, apagar o usuário e entrar de novo.
 
 ## Testes
 
@@ -241,6 +329,11 @@ Registro do que custou investigação, para não repetir:
 | Foco não voltava ao botão ao fechar modal (WebKit) | o Safari não foca botões clicados | teste abre o modal pelo teclado; o modal devolve o foco a quem o abriu |
 | e2e intermitente após **Arrumar** | o enquadramento é animado e o teste media no meio | helpers esperam o elemento parar (`hover({ trial: true })`) |
 | `sed -i ''` falhava no macOS do projeto | `sed` é alias de GNU sed (`gsed`) | sintaxe GNU (`sed -i 's/…/…/'`) |
+| `base` não existe em `$app/paths` | o SvelteKit 3 removeu `base` | `resolve('/')` dá a raiz do app com o subcaminho |
+| `supabase-js` no bundle mesmo sem as variáveis da nuvem | import estático: o tree-shaking não prova que a config é `null` | adaptadores da nuvem por `import()` em `ui/src/lib/cloud/services.ts` (chunk à parte) |
+| Safari não abre `http://localhost:5173` com o `dev` | o Vite ouvia só em IPv6 (`[::1]`) e o Safari tentou o IPv4 | `dev:cloud` ouve em `127.0.0.1` |
+| Safari troca `http://localhost` por `https://` | HSTS guardado para `localhost` por outro app de dev | usar `127.0.0.1`; para limpar, fechar o Safari e apagar `~/Library/Cookies/HSTS.plist` |
+| Login do GitHub recusado no Supabase local | o auth local manda o callback `http://127.0.0.1:54321/…`, e o OAuth App tinha `localhost` | callback do OAuth App em `127.0.0.1` |
 
 ## Licença
 

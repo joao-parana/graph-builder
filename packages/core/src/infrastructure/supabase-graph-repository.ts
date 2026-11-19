@@ -8,6 +8,13 @@ import type { CloudClient } from './supabase-client.ts';
 /** Falha do Supabase (rede, sessão, RLS) ou grafo guardado que não passa no codec. */
 export class CloudStorageError extends Error {
   override readonly name = 'CloudStorageError';
+  /** Só o motivo (sem "Não foi possível…"), para a UI montar o próprio texto (FR-55). */
+  readonly reason: string;
+
+  constructor(message: string, reason: string) {
+    super(message);
+    this.reason = reason;
+  }
 }
 
 const TABLE = 'graphs';
@@ -16,7 +23,7 @@ const TABLE = 'graphs';
 const toIso = (timestamp: string): string => new Date(timestamp).toISOString();
 
 const fail = (action: string, message: string): never => {
-  throw new CloudStorageError(`Não foi possível ${action} na nuvem: ${message}`);
+  throw new CloudStorageError(`Não foi possível ${action} na nuvem: ${message}`, message);
 };
 
 export class SupabaseGraphRepository implements GraphRepository {

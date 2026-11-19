@@ -158,12 +158,18 @@ max_indexes = 5
 enabled = true
 # The base URL of your website. Used as an allow-list for redirects and for constructing URLs used
 # in emails.
-# Graph Builder (SPEC §9.2): dev (5173) e preview/e2e (4173).
-site_url = "http://localhost:5173/"
+# Graph Builder (SPEC §9.2): dev (5173) e preview/e2e (4173), em 127.0.0.1 (o callback do GitHub
+# também é 127.0.0.1) e em localhost.
+site_url = "http://127.0.0.1:5173/"
 # The public URL that Auth serves on. Defaults to the API external URL with `/auth/v1` appended.
 # external_url = ""
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
-additional_redirect_urls = ["http://localhost:5173/", "http://localhost:4173/"]
+additional_redirect_urls = [
+  "http://127.0.0.1:5173/",
+  "http://127.0.0.1:4173/",
+  "http://localhost:5173/",
+  "http://localhost:4173/",
+]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
 # JWT issuer URL. If not set, defaults to auth.external_url.
@@ -344,10 +350,11 @@ skip_nonce_check = false
 # If enabled, it will allow the user to successfully authenticate when the provider does not return an email address.
 email_optional = false
 
-# ADR-0004: login com GitHub. Ligado na L08, com um OAuth App de desenvolvimento cujo callback é
-# http://localhost:54321/auth/v1/callback.
+# ADR-0004: login com GitHub, com um OAuth App de desenvolvimento cujo callback é
+# http://127.0.0.1:54321/auth/v1/callback (README; SPEC §9.2). Sem as duas variáveis, o `db:start` sobe igual e
+# só o login real pelo GitHub falha; os testes não dependem dele (Q9).
 [auth.external.github]
-enabled = false
+enabled = true
 client_id = "env(SUPABASE_AUTH_EXTERNAL_GITHUB_CLIENT_ID)"
 secret = "env(SUPABASE_AUTH_EXTERNAL_GITHUB_SECRET)"
 redirect_uri = ""
