@@ -10,7 +10,7 @@ import {
   type EditResult,
 } from '@graph-builder/core';
 import { testContext } from '#lib/state/test-context.ts';
-import { isReturnWire, isValidWire, toFlowEdges, toFlowNodes } from './mapping.ts';
+import { isReturnWire, isValidWire, measuredSizes, toFlowEdges, toFlowNodes } from './mapping.ts';
 
 const must = (result: EditResult): Graph => {
   if (!result.ok) throw new Error(result.error.code);
@@ -66,6 +66,15 @@ describe('toFlowNodes', () => {
       NodeKind.Delivery,
     ]);
     expect(nodes.find((n) => n.data.kind === NodeKind.Memory)?.data.relations).toEqual([]);
+  });
+
+  it('mantém o tamanho medido antes, para os fios não sumirem do DOM', () => {
+    const drawn = toFlowNodes(sample(), []).map((n, i) =>
+      i === 1 ? { ...n, measured: { width: 190, height: 72 } } : n,
+    );
+    const nodes = toFlowNodes(sample(), [], [], measuredSizes(drawn));
+    expect(nodes[1]?.measured).toEqual({ width: 190, height: 72 });
+    expect(nodes[0]).not.toHaveProperty('measured');
   });
 
   it('contorno amarelo nas peças citadas em "Antes de exportar" (FR-20)', () => {

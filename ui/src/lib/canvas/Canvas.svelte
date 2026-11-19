@@ -14,6 +14,7 @@
   import {
     isReturnWire,
     isValidWire,
+    measuredSizes,
     type PieceNode,
     toFlowEdges,
     toFlowNodes,
@@ -32,6 +33,13 @@
 
   const nodeTypes: NodeTypes = { piece: PieceNodeView };
 
+  /**
+   * FR-03: movimento máximo entre apertar e soltar que ainda conta como clique. O `mousedown` num fio
+   * também inicia o arraste do canvas; com o padrão de 1 px, um tremor do mouse vira arraste e
+   * o clique no fio se perde.
+   */
+  const CLICK_TOLERANCE_PX = 4;
+
   let nodes: PieceNode[] = $state.raw([]);
   let edges: Wire[] = $state.raw([]);
   /** Viewport salvo do grafo aberto; o canvas remonta a cada grafo aberto (FR-30). */
@@ -39,7 +47,8 @@
   let zoom = $state(initial.zoom);
 
   $effect.pre(() => {
-    nodes = toFlowNodes(editor.graph, editor.selectedNodeIds, flagged);
+    const sizes = measuredSizes(untrack(() => nodes));
+    nodes = toFlowNodes(editor.graph, editor.selectedNodeIds, flagged, sizes);
   });
   $effect.pre(() => {
     edges = toFlowEdges(editor.graph, editor.armedEdgeId);
@@ -69,6 +78,7 @@
     snapGrid={editor.snap ? [16, 16] : undefined}
     deleteKey={null}
     zoomOnDoubleClick={false}
+    paneDragThreshold={CLICK_TOLERANCE_PX}
     proOptions={{ hideAttribution: true }}
     isValidConnection={(connection) => isValidWire(editor.graph, connection)}
     onbeforeconnect={connect}

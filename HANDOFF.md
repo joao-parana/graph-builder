@@ -1,8 +1,9 @@
-# HANDOFF — 2026-11-18 (sessão 8: L06 ui-io)
+# HANDOFF — 2026-11-19 (sessão 8: L06 ui-io)
 
 ## Estado
-- Camada atual: **L06 ui-io — gate verde (e2e em Chrome, Firefox e WebKit)**, ainda **sem commit**
-  em `feature/layer-06-ui-io` (criada a partir de `develop`, que tem a L05 e a tag `v0.5.0`).
+- Camada atual: **L06 ui-io — gate verde (e2e em Chrome, Firefox e WebKit)** em
+  `feature/layer-06-ui-io`. A L06 já tem commit (`40cf603`); a correção do clique no fio (abaixo)
+  ainda **não tem commit**. Falta merge em `develop`, tag `v1.0.0` e merge em `main`.
 - `version` já em `1.0.0` nos três `package.json`; `bun.lock` atualizado.
 - Tags existentes: `v0.0.1` … `v0.5.0`. A `v1.0.0` fecha o roadmap do SPEC §9 e vai para `main`.
 - SPEC atualizado antes do código:
@@ -37,16 +38,23 @@
 ### Notas para os testes e2e
 - WebKit não põe o foco num botão clicado (como o Safari): o teste de foco abre o modal pelo teclado.
 - `clickWire` clica no `.svelte-flow__edge-interaction` (traçado largo, alvo real do clique).
-- **Intermitente:** o teste "cortar" do `canvas.spec.ts` falhou ~1 vez em 12 repetições no Firefox
-  e no WebKit (o 1º clique às vezes não arma o fio). O gate completo passou. Suspeita: um
-  `onselectionchange` atrasado do Svelte Flow chama `Editor.select([peça])`, que desarma o fio.
-  Não investigado a fundo.
+
+### Correção: clique no fio se perdia (2026-11-19)
+- Sintoma: o teste "cortar" falhava ~1 vez em 12 no Firefox/WebKit (o clique no fio não armava).
+- Causa (instrumentada com eventos de ponteiro e `MutationObserver`): a cada mudança, o `Canvas`
+  recria os nós sem `measured`; o Svelte Flow os trata como não medidos e **tira os fios do DOM**
+  até medir de novo. Se isso cai entre `pointerdown` e `pointerup`, os alvos diferem e o navegador
+  não gera `click`. O gatilho mais comum era a validação de 150 ms (FR-20) logo após ligar.
+- Correção: `toFlowNodes` recebe os tamanhos já medidos (`measuredSizes`) e os repassa. Afetava
+  usuários reais também (clicar num fio logo depois de editar).
+- Extra (SPEC FR-03): `paneDragThreshold = 4` — tremor de até 4 px entre apertar e soltar ainda é
+  clique (o padrão de 1 px transformava em arraste do canvas).
+- Verificado: e2e completo 3× por navegador → 180/180; antes, 1 falha a cada ~12.
 
 ## Pendências
-- Commit da L06 (manual), merge em `develop`, tag `v1.0.0`, merge em `main`.
+- Commit da correção do clique no fio, merge em `develop`, tag `v1.0.0`, merge em `main`.
 - **A partir de 2026-11-20:** apagar `minimumReleaseAgeExcludes` do `bunfig.toml` e o aviso do adendo
   do ADR-0003.
-- Investigar a intermitência do "cortar" no Firefox/WebKit (ver acima).
 - Cobertura de branches da UI: 84,16% (componentes `.svelte` cobertos pelo e2e).
 - Copiar (clipboard) não tem e2e: precisa de permissão diferente em cada navegador.
 
@@ -62,9 +70,9 @@ ui typecheck: COMPLETED 608 FILES 0 ERRORS 0 WARNINGS 0 FILES_WITH_PROBLEMS
 @graph-builder/core lint: Exited with code 0
 ui lint: Exited with code 0
 @graph-builder/core test:       Tests  253 passed (253)
-@graph-builder/core test: Branches     : 98.27% ( 398/405 )
-ui test:       Tests  107 passed (107)
-ui test: Branches     : 84.16% ( 186/221 )
-ui e2e:   60 passed (1.1m)
+@graph-builder/core test: Branches     : 98.02% ( 397/405 )
+ui test:       Tests  108 passed (108)
+ui test: Branches     : 84.51% ( 191/226 )
+ui e2e:   60 passed (48.3s)
 ```
-Extra: `prettier --check .` → sem problemas.
+Extra: `prettier --check .` → sem problemas; `playwright test --repeat-each=3` → 180 passed.
