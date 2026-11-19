@@ -1,6 +1,9 @@
 # SPEC — Graph Builder (editor visual de grafos de agentes)
 
 > **Status:** Draft v0.1 · **Data:** 2026-11-13 · **Dono:** João
+> **v2 (proposta, 2026-11-19, ADR-0004):** conta e grafos na nuvem com Supabase — §1, §1.3, §2,
+> FR-50..56, NFR-05/09/10, §7.1–§7.4, §9 (L07–L09), §10, §12 (Q7–Q9). Nada da v2 é implementado
+> antes de as questões Q7–Q9 serem resolvidas.
 > **Contrato:** este arquivo é a fonte da verdade. Mudança de comportamento = mudança aqui primeiro.
 > **Origem:** inspirado na ferramenta mostrada em <https://www.youtube.com/watch?v=r8JueeaKJ9w>.
 > A página do vídeo não pôde ser lida; esta spec foi derivada de uma captura de tela.
@@ -10,7 +13,7 @@
 
 ## 1. Visão
 
-Um editor web, 100% local, onde o desenvolvedor **desenha um grafo de agentes** (quem constrói,
+Um editor web, local por padrão, onde o desenvolvedor **desenha um grafo de agentes** (quem constrói,
 quem julga, onde decide, o que se lembra) e **exporta** esse grafo como:
 
 1. um **prompt Markdown** pronto para colar no Claude (Claude Code / Claude Desktop), que descreve
@@ -19,17 +22,30 @@ quem julga, onde decide, o que se lembra) e **exporta** esse grafo como:
 
 O app **não executa** o grafo. Ele modela e gera a especificação; quem executa é o Claude.
 
+Na v2, o app tem **dois modos** (ADR-0004): o **local** (a v1: grafos no navegador, offline, sem
+conta) e a **nuvem** (grafos guardados no Supabase, por usuário, só para convidados). O app continua
+estático, sem servidor próprio.
+
 ### 1.1 Objetivos
 - G1 — Modelar visualmente grafos com 6 tipos de peça e regras de ligação claras.
 - G2 — Impedir/alertar grafos mal formados antes da exportação ("Antes de exportar").
 - G3 — Exportar um prompt determinístico (mesmo grafo ⇒ mesmo texto) e um JSON reimportável.
 - G4 — Guardar vários grafos localmente ("Meus grafos").
+- G5 (v2) — Guardar os grafos de cada usuário na nuvem, com acesso restrito a convidados.
 
 ### 1.2 Fora de escopo (v1)
 - Executar o grafo / chamar a API do Claude.
 - Contas, login, nuvem, colaboração em tempo real (o botão "Sair" da captura **não** entra).
+  → Contas e nuvem entram na v2 (§1.3); colaboração continua fora.
 - Botão "Feedback".
 - Exportar direto para formatos nativos do Claude Code (skills, subagents, workflows) → v2 (§11).
+
+### 1.3 Escopo da v2 (ADR-0004)
+- **Entra:** login com GitHub (Supabase Auth); acesso só para convidados; grafos na nuvem por
+  usuário; escolha entre os modos local e nuvem; cópia de grafos entre os modos.
+- **Fora:** compartilhar grafos entre usuários, colaboração em tempo real, sincronização automática
+  entre os modos, uso offline da nuvem, papéis (admin/usuário), cadastro aberto, outros provedores
+  de login.
 
 ---
 
@@ -50,6 +66,11 @@ O app **não executa** o grafo. Ele modela e gera a especificação; quem execut
 | Memória | `NodeKind.Memory` | Quadro compartilhado: itens ligados por relações com nome. Peças escrevem e consultam. |
 | Laço | `Loop` | Par Trabalhador(es) → Supervisor com retorno ao construtor em caso de reprovação. |
 | Preencher rápido | `BarPreset` | Botões que inserem/removem critérios prontos na barra (toggle). |
+| Modo | `StorageMode` (`'local' \| 'cloud'`) | Onde os grafos abertos e listados ficam guardados (v2). |
+| Neste navegador | `StorageMode` `'local'` | Modo local: IndexedDB, offline, sem conta (a v1). |
+| Na nuvem | `StorageMode` `'cloud'` | Modo nuvem: tabela `graphs` do Supabase, só com sessão (v2). |
+| Conta | `Account` | Usuário convidado, identificado pelo login do GitHub (v2). |
+| Convidado | — | Pessoa que o dono cadastrou no Supabase; só ela entra na nuvem (v2). |
 
 ---
 
@@ -309,6 +330,38 @@ Formato: **FR-xx** · descrição · critérios de aceite (Dado/Quando/Então).
 Modais (FR-21, FR-22, FR-31, FR-32, FR-40): `<dialog>` nativo; Esc e ✕ fecham; o foco fica dentro
 do modal e volta ao botão que o abriu. Atalhos do editor não agem com um modal aberto.
 
+### Conta e nuvem (v2, ADR-0004)
+Valem só quando o build tem o Supabase configurado (§9.2). Sem ele, o app é a v1: nada desta seção
+aparece.
+- **FR-50 Entrar com GitHub:** botão "Entrar" no topo, no modo local.
+  - Dado o modo local, quando o usuário clica em "Entrar", então vai ao GitHub (OAuth via Supabase,
+    PKCE) e volta para a raiz do app.
+  - Na volta com sucesso: o topo mostra o login do GitHub (e o avatar, se houver); o modo passa a
+    "Na nuvem"; abre o grafo mais recente da nuvem ou, sem nenhum, cria um e o salva (como FR-30).
+  - A URL perde os parâmetros do retorno (`?code=…`) sem recarregar a página.
+  - O grafo local que estava aberto é gravado antes de sair para o GitHub.
+- **FR-51 Acesso negado:** conta do GitHub sem convite (ou login cancelado).
+  - O app fica no modo local, sem sessão, e mostra: "Sua conta do GitHub não tem acesso à nuvem.
+    Peça um convite." (cancelado: nenhuma mensagem). Nenhum dado local muda.
+- **FR-52 Sair:** menu do usuário no topo → "Sair".
+  - Grava o que estiver pendente na nuvem, encerra a sessão, volta ao modo local e abre o grafo
+    local mais recente (FR-30).
+- **FR-53 Trocar de modo:** seletor "Neste navegador | Na nuvem" no topo; "Na nuvem" só com sessão.
+  - Trocar grava antes o que estiver pendente, zera o histórico e abre o grafo mais recente do modo
+    escolhido (como trocar de grafo, FR-30).
+  - O navegador lembra o último modo; ao iniciar com sessão válida, abre nele.
+  - "Meus grafos" (FR-31) lista só os grafos do modo atual e diz qual é no título.
+- **FR-54 Copiar entre modos:** em "Meus grafos", ação por linha "Copiar para a nuvem" (modo local,
+  com sessão) ou "Copiar para este navegador" (modo nuvem).
+  - A cópia ganha `GraphId` novo, o mesmo nome e `updatedAt = now`; o original não muda; a cópia não
+    abre. Toast "Copiado para a nuvem" / "Copiado para este navegador".
+- **FR-55 Salvamento na nuvem:** mesmo comportamento do FR-30 (debounce 500 ms, indicador, viewport).
+  - Falha de rede ou do Supabase: "não salvo" + toast do motivo; a edição continua em memória e o
+    salvamento é tentado de novo na próxima mudança e quando o navegador volta a ficar online.
+- **FR-56 Sessão expirada:** se a sessão não puder ser renovada, o indicador fica "não salvo", o
+  toast diz "Sua sessão expirou. Entre de novo." e o topo volta a mostrar "Entrar".
+  - O grafo aberto continua em memória; ao entrar de novo com a mesma conta, ele é gravado na nuvem.
+
 ---
 
 ## 5. Requisitos não funcionais
@@ -319,10 +372,12 @@ do modal e volta ao botão que o abriu. Atalhos do editor não agem com um modal
 | NFR-02 | Camadas `domain` e `application` sem import de Svelte, DOM ou libs de UI (verificado por regra de lint de fronteira). |
 | NFR-03 | Cobertura ≥ 90% em `domain` + `application` + `infrastructure` (Vitest; a infraestrutura entra a partir da L03). |
 | NFR-04 | 200 peças / 400 fios com pan/zoom a 60 fps num M3; validação < 16 ms. |
-| NFR-05 | Funciona offline; nenhum dado sai do navegador. |
+| NFR-05 | **Modo local:** funciona offline; nenhum dado sai do navegador. **Modo nuvem (v2):** só o JSON do grafo (`GraphCodec`) e a sessão trafegam, e só para o projeto Supabase do app; nenhum outro serviço recebe dados; sem telemetria. |
 | NFR-06 | UI em pt-BR; textos centralizados em `ui/src/lib/i18n/pt-BR.ts`. |
 | NFR-07 | Acessibilidade: todas as ações da paleta/inspetor por teclado; foco visível; contraste AA. |
 | NFR-08 | Navegadores: Chrome, Safari e Firefox atuais. |
+| NFR-09 | Segurança da nuvem (v2): RLS ativo em toda tabela, com política por dono (`owner_id = auth.uid()`); cadastro público desligado; só a URL e a chave pública do Supabase vão no bundle (nunca a *service role key*); sem `{@html}` com dado do usuário; CSP por `<meta>`. |
+| NFR-10 | Testes da nuvem (v2) rodam contra o Supabase local (Supabase CLI, Docker), nunca contra o projeto de produção; o esquema e as políticas vêm só de `supabase/migrations/`. |
 
 ---
 
@@ -436,6 +491,7 @@ graph-builder/
 │   ├── adr/0001-stack-e-arquitetura.md
 │   ├── adr/0002-bun-como-gerenciador-de-pacotes.md
 │   ├── adr/0003-ui-em-svelte-e-sveltekit.md
+│   ├── adr/0004-conta-e-nuvem-com-supabase.md
 │   └── mockups/mockups.html
 ├── packages/
 │   └── core/                    # framework-free
@@ -443,6 +499,8 @@ graph-builder/
 │           ├── domain/          # model, invariants, edge-kind derivation, validation, topo sort
 │           ├── application/     # use cases + ports
 │           └── infrastructure/  # graph-schema, json-codec, prompt-renderer, indexeddb-repository, dagre-layout, system
+│                                # v2: supabase-graph-repository, supabase-auth-gateway
+├── supabase/                    # v2: config.toml + migrations/ (esquema e RLS, §7.4)
 └── ui/                          # SvelteKit 3 + Svelte 5 + @xyflow/svelte (presentation)
     ├── vite.config.ts           # sveltekit({ adapter: adapter-static, fallback index.html })
     ├── package.json             # "imports": { "#lib/*": "./src/lib/*" } (Kit 3 removeu $lib)
@@ -468,7 +526,18 @@ interface GraphCodec     { encode(g: Graph): string;                  // JSON (L
                            decode(text: string): Result<Graph, CodecIssue[]> }
 interface GraphSummary   { id: GraphId; name: string; nodeCount: number; updatedAt: string } // FR-31
 interface CodecIssue     { path: string; message: string }            // FR-22: caminho do campo
+
+// v2 (ADR-0004)
+type StorageMode = 'local' | 'cloud';
+interface Account        { id: string; login: string; avatarUrl: string | null } // FR-50
+type AuthError = 'NOT_INVITED' | 'CANCELLED' | 'NETWORK';                     // FR-51
+interface AuthGateway    { account(): Promise<Account | null>;               // sessão atual
+                           signIn(): Promise<void>;                          // redireciona ao GitHub
+                           completeSignIn(): Promise<Result<Account, AuthError> | null>; // na volta; null = não é volta de login
+                           signOut(): Promise<void>;
+                           onChange(listener: (a: Account | null) => void): () => void } // FR-56
 ```
+`SupabaseGraphRepository` implementa o mesmo `GraphRepository`: a UI escolhe o repositório pelo modo.
 
 ### 7.2 Casos de uso
 `CreateGraph`, `AddNode`, `ConnectNodes`, `DisconnectEdge`, `UpdateNode`, `MoveNode`,
@@ -500,6 +569,8 @@ Contratos (L02):
   `createdAt = updatedAt = now`; peças, fios e viewport iguais.
 - `RenameGraph` (L06): `renameGraph(ctx, repo, id, name)` abre, aplica `UpdateGraph` e salva; grafo
   inexistente → `null`; nome inválido → `INV-09`.
+- `CopyGraph` (v2, FR-54): `copyGraph(ctx, from, to, id)` abre em `from`, dá `GraphId` novo e
+  `updatedAt = now`, salva em `to`; grafo inexistente → `null`.
 - `amend(history, next)` (L05): troca o grafo atual sem criar passo novo nem mexer no `past`; limpa
   o `future`. Usado para juntar as edições de um campo num passo só.
 
@@ -512,9 +583,32 @@ Contratos (L02):
   `@testing-library/svelte`, `@playwright/test`, `eslint` + `eslint-plugin-boundaries` +
   `eslint-plugin-svelte`, `prettier` + `prettier-plugin-svelte`.
 
+- **v2 (ADR-0004):** `@supabase/supabase-js` (2.x, só em `infrastructure`). Dev: `supabase` (CLI,
+  3.x) para o banco local e as migrations.
+
 Política (ADR-0003): no scaffold da L00, usar a versão mais atual de cada pacote compatível com
 o Svelte e o SvelteKit mais atuais. Versões de referência em 2026-11-18: ver tabela do ADR-0003.
 (Instalação só após OK — ver CLAUDE.md.)
+
+### 7.4 Dados na nuvem (v2, ADR-0004)
+```sql
+create table public.graphs (
+  owner_id   uuid        not null default auth.uid() references auth.users on delete cascade,
+  id         text        not null,                 -- GraphId
+  name       text        not null,                 -- cópia de data.name, para a lista (FR-31)
+  node_count integer     not null,                 -- idem
+  updated_at timestamptz not null,                 -- idem; ordena a lista
+  data       jsonb       not null,                 -- JSON versionado do GraphCodec
+  primary key (owner_id, id)
+);
+alter table public.graphs enable row level security;
+create policy graphs_owner on public.graphs for all to authenticated
+  using (owner_id = (select auth.uid())) with check (owner_id = (select auth.uid()));
+```
+- `list()` lê só `id, name, node_count, updated_at` (sem `data`), do mais recente para o mais antigo.
+- `get()` passa `data` pelo `GraphCodec.decode`; JSON inválido é erro do repositório, não grafo
+  vazio.
+- `save()` é um *upsert* por `(owner_id, id)`.
 
 ---
 
@@ -549,6 +643,9 @@ Entrega `#2F5D3A` · Decisão `#5B3A7A` · Memória `#3E4C59`. Fundo papel `#F3E
 | 04 | `feature/layer-04-ui-canvas` | canvas, paleta, peças, fios, controles de visão, desfazer/refazer (FR-01..09) | Playwright: criar/ligar/cortar/duplicar | `v0.4.0` |
 | 05 | `feature/layer-05-ui-panels` | inspetores M2–M5, painel "Antes de exportar" | Playwright: validação ao vivo | `v0.5.0` |
 | 06 | `feature/layer-06-ui-io` | modais M6–M8, Meus grafos, autosave | Playwright: export→import ida e volta | `v1.0.0` |
+| 07 | `feature/layer-07-cloud-infra` | migrations + RLS (§7.4), `SupabaseGraphRepository`, `SupabaseAuthGateway`, `copyGraph` | integração contra o Supabase local, incluindo RLS entre dois usuários; cobertura (NFR-03) | `v1.2.0` |
+| 08 | `feature/layer-08-ui-account` | Entrar/Sair, seletor de modo, Meus grafos por modo, copiar entre modos, erros de rede e sessão (FR-50..56) | Playwright com Supabase local | `v1.3.0` |
+| 09 | `feature/layer-09-cloud-release` | variáveis no Actions, URLs de retorno no Supabase, CSP, README, deploy | login real conferido no Pages com um convidado e um não convidado | `v2.0.0` |
 
 Escopo da L06: barra do topo (FR-33), modais M6–M8, Limpar, Ajuda e salvamento automático (FR-21,
 FR-22, FR-30..33, FR-40); e2e em Chrome, Firefox e WebKit (Safari) do Playwright.
@@ -558,19 +655,14 @@ Escopo da L05: inspetor (FR-10..15) e painel "Antes de exportar" (FR-20); export
 Escopo da L04: o grafo fica só em memória (salvamento automático e botões do topo na L06); o
 painel direito mostra um texto provisório (inspetor na L05).
 
+Escopo da v2 (L07–L09): §1.3, FR-50..56, NFR-09/10, §7.4. Antes da L07: resolver Q7–Q9 (§12).
+
 Merge em `develop` ao fim de cada camada; `master` (branch principal) só em `v1.0.0`.
 
 Depois da v1 (Git flow): trabalho novo em `feature/…` ou `fix/…` a partir da `develop`, com merge
 nela; a release vai da `develop` para a `master` com tag `vX.Y.Z`. A worktree do Claude fica na
 própria branch (`claude/…`), porque a `develop` está aberta no checkout principal e o Git não abre
 uma branch em dois worktrees.
-
-### 9.2 Deploy (GitHub Pages)
-O build é publicado em `https://joao-parana.github.io/graph-builder/` pelo workflow
-`.github/workflows/pages.yml`, a cada push na `master` (release) ou por disparo manual. O subcaminho
-vem da variável de ambiente `BASE_PATH` (`kit.paths.base`): o workflow usa `/graph-builder`; vazia
-(padrão), o app fica na raiz, como em dev, `vite preview` e e2e. Os grafos ficam no IndexedDB da
-origem `joao-parana.github.io` (banco `graph-builder`).
 
 ### 9.1 Gates (rodar em terminal ZSH separado, saída em `/tmp/gates.txt`)
 O e2e (`bun run --filter ui e2e`, a partir da L04) usa o Google Chrome instalado
@@ -579,6 +671,17 @@ O e2e (`bun run --filter ui e2e`, a partir da L04) usa o Google Chrome instalado
 { bun run --filter '*' typecheck && bun run --filter '*' lint && bun run --filter '*' test --coverage && bun run --filter ui e2e ; } 2>&1 | tee /tmp/gates.txt
 ```
 
+### 9.2 Deploy (GitHub Pages)
+O build é publicado em `https://joao-parana.github.io/graph-builder/` pelo workflow
+`.github/workflows/pages.yml`, a cada push na `master` (release) ou por disparo manual. O subcaminho
+vem da variável de ambiente `BASE_PATH` (`kit.paths.base`): o workflow usa `/graph-builder`; vazia
+(padrão), o app fica na raiz, como em dev, `vite preview` e e2e. Os grafos ficam no IndexedDB da
+origem `joao-parana.github.io` (banco `graph-builder`).
+- **v2 (L09):** o build do modo nuvem recebe `PUBLIC_SUPABASE_URL` e `PUBLIC_SUPABASE_KEY` (chave
+  pública) como *variables* do GitHub Actions. Sem elas, o build é só local (FR-50). No Supabase, as
+  URLs de retorno permitidas são `https://joao-parana.github.io/graph-builder/` e as de dev/preview
+  (`http://localhost:5173/`, `http://localhost:4173/`).
+
 ---
 
 ## 10. Estratégia de testes
@@ -586,6 +689,10 @@ O e2e (`bun run --filter ui e2e`, a partir da L04) usa o Google Chrome instalado
 - **Renderer:** golden files em `packages/core/test/golden/*.md`; determinismo testado renderizando 2× com nós embaralhados.
 - **Codec:** round-trip `Graph → JSON → Graph` idêntico; JSONs inválidos de exemplo com mensagens esperadas.
 - **E2E (Playwright):** fluxos M1–M8.
+- **Nuvem (v2, NFR-10):** os mesmos testes de contrato do `GraphRepository` rodam no IndexedDB
+  (fake) e no `SupabaseGraphRepository` (Supabase local); testes de RLS com dois usuários (um não lê,
+  não grava e não apaga o grafo do outro; sem sessão, nada); e2e do modo nuvem com sessão injetada
+  (Q9).
 
 ---
 
@@ -594,6 +701,8 @@ O e2e (`bun run --filter ui e2e`, a partir da L04) usa o Google Chrome instalado
 - Rodar o grafo via API (Claude Agent SDK) com visualização do progresso por peça.
 - Biblioteca de grafos-modelo (pipeline com crítico, diamante fan-out/fan-in).
 - Sub-grafo: Entrega de um grafo alimentando outro ("fase seguinte").
+- Depois da v2 (ADR-0004): compartilhar grafos entre usuários, sincronização automática entre os
+  modos, papéis (admin/usuário).
 
 ---
 
@@ -606,4 +715,7 @@ O e2e (`bun run --filter ui e2e`, a partir da L04) usa o Google Chrome instalado
 | Q3 | Supervisor pode julgar uma Entrega (não só Trabalhador)? | **Resolvida:** sim. Julga `Flow` vindo de Trabalhador, Entrega ou Supervisor (em série, com construtores por recursão); Entrada não (§3.3) | L01 |
 | Q4 | Gerenciador de pacotes: pnpm ou bun? | **Resolvida:** Bun ≥ 1.3, só para pacotes e scripts (ADR-0002) | L00 |
 | Q5 | Cortar fio com 1 clique (como diz a ajuda original) ou 2? | **Resolvida:** 2 passos (clique seleciona; 2º clique ou `Del` remove) + undo (FR-03) | L04 |
+| Q7 | Com cadastro fechado, o login pelo GitHub entra no usuário convidado por e-mail (vínculo automático de identidades)? | Validar num projeto Supabase de teste: convidar um e-mail, entrar pelo GitHub com o mesmo e-mail verificado e com outro. Se não vincular: allowlist de logins do GitHub num *auth hook* "before user created" (ADR-0004) | L07 |
+| Q8 | Onde o navegador lembra o último modo (FR-53)? | `localStorage` (`graph-builder:mode`); sem sessão válida, sempre local | L08 |
+| Q9 | Como o e2e entra na nuvem, se o GitHub OAuth não é automatizável? | O teste cria o usuário pela API admin do Supabase local e injeta a sessão (`storageState`); o botão "Entrar" só é conferido até o redirecionamento | L08 |
 | Q6 | Presets extras além de "Resultado WOW" e "Sem erros" | **Resolvida:** os 4 presets do FR-12, com ids e textos definidos (o `ToggleBarPreset` da L02 precisa deles) | L05 |
