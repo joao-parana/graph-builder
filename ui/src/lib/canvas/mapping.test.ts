@@ -67,6 +67,11 @@ describe('toFlowNodes', () => {
     ]);
     expect(nodes.find((n) => n.data.kind === NodeKind.Memory)?.data.relations).toEqual([]);
   });
+
+  it('contorno amarelo nas peças citadas em "Antes de exportar" (FR-20)', () => {
+    const nodes = toFlowNodes(sample(), [], ['id3']);
+    expect(nodes.filter((n) => n.data.flagged).map((n) => n.id)).toEqual(['id3']);
+  });
 });
 
 describe('toFlowEdges (FR-09)', () => {

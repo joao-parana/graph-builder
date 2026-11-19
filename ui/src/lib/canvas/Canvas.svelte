@@ -22,7 +22,12 @@
   import ZoomBar from './ZoomBar.svelte';
   import { ZOOM_MAX, ZOOM_MIN } from './zoom.ts';
 
-  let { editor, ondropkind }: { editor: Editor; ondropkind: (event: DragEvent) => void } = $props();
+  let {
+    editor,
+    flagged,
+    ondropkind,
+  }: { editor: Editor; flagged: readonly string[]; ondropkind: (event: DragEvent) => void } =
+    $props();
 
   const nodeTypes: NodeTypes = { piece: PieceNodeView };
 
@@ -31,7 +36,7 @@
   let zoom = $state(1);
 
   $effect.pre(() => {
-    nodes = toFlowNodes(editor.graph, editor.selectedNodeIds);
+    nodes = toFlowNodes(editor.graph, editor.selectedNodeIds, flagged);
   });
   $effect.pre(() => {
     edges = toFlowEdges(editor.graph, editor.armedEdgeId);

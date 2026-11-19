@@ -20,6 +20,7 @@
 <div
   class="piece"
   class:selected
+  class:warn={data.flagged}
   style:--c={`var(--kind-${data.kind})`}
   data-testid="piece"
   data-kind={data.kind}
@@ -61,6 +62,9 @@
     padding: 8px 10px;
     box-shadow: 0 2px 6px rgb(0 0 0 / 6%);
     text-align: left;
+  }
+  .piece.warn {
+    box-shadow: 0 0 0 2px #e2b04a;
   }
   .piece.selected {
     outline: 2px solid var(--c);
