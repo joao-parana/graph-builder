@@ -565,6 +565,13 @@ nela; a release vai da `develop` para a `master` com tag `vX.Y.Z`. A worktree do
 própria branch (`claude/…`), porque a `develop` está aberta no checkout principal e o Git não abre
 uma branch em dois worktrees.
 
+### 9.2 Deploy (GitHub Pages)
+O build é publicado em `https://joao-parana.github.io/graph-builder/` pelo workflow
+`.github/workflows/pages.yml`, a cada push na `master` (release) ou por disparo manual. O subcaminho
+vem da variável de ambiente `BASE_PATH` (`kit.paths.base`): o workflow usa `/graph-builder`; vazia
+(padrão), o app fica na raiz, como em dev, `vite preview` e e2e. Os grafos ficam no IndexedDB da
+origem `joao-parana.github.io` (banco `graph-builder`).
+
 ### 9.1 Gates (rodar em terminal ZSH separado, saída em `/tmp/gates.txt`)
 O e2e (`bun run --filter ui e2e`, a partir da L04) usa o Google Chrome instalado
 (`channel: 'chrome'`, NFR-08); a partir da L06 também Firefox e WebKit (motor do Safari) do Playwright.

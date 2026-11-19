@@ -6,6 +6,22 @@
       "runtimeExecutable": "bun",
       "runtimeArgs": ["run", "--filter", "ui", "dev", "--port", "5173", "--strictPort"],
       "port": 5173
+    },
+    {
+      "name": "ui-pages-preview",
+      "runtimeExecutable": "env",
+      "runtimeArgs": [
+        "BASE_PATH=/graph-builder",
+        "bun",
+        "run",
+        "--filter",
+        "ui",
+        "preview",
+        "--port",
+        "4174",
+        "--strictPort"
+      ],
+      "port": 4174
     }
   ]
 }
