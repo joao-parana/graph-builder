@@ -45,14 +45,30 @@ export interface WireData extends Record<string, unknown> {
 
 export type Wire = Edge<WireData>;
 
+/** Tamanho medido pelo Svelte Flow na renderização anterior. */
+export type Measured = NonNullable<PieceNode['measured']>;
+
+/** Tamanhos já medidos dos nós desenhados, por id. */
+export function measuredSizes(nodes: readonly PieceNode[]): ReadonlyMap<string, Measured> {
+  const sizes = new Map<string, Measured>();
+  for (const node of nodes) if (node.measured !== undefined) sizes.set(node.id, node.measured);
+  return sizes;
+}
+
+/**
+ * `measured`: tamanhos da renderização anterior. Sem eles, o Svelte Flow trata cada nó recriado
+ * como não medido e tira os fios do DOM até medir de novo; um clique no fio nesse meio se perde.
+ */
 export function toFlowNodes(
   graph: Graph,
   selected: readonly NodeId[],
   flagged: readonly string[] = [],
+  measured: ReadonlyMap<string, Measured> = new Map(),
 ): PieceNode[] {
   const chosen = new Set<string>(selected);
   const warned = new Set(flagged);
   return graph.nodes.map((node) => ({
+    ...(measured.has(node.id) ? { measured: measured.get(node.id) } : {}),
     id: node.id,
     type: PIECE_TYPE,
     position: { x: node.position.x, y: node.position.y },

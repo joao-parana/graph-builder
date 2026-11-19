@@ -204,6 +204,8 @@ Formato: **FR-xx** · descrição · critérios de aceite (Dado/Quando/Então).
   - Ligação inválida (INV-02..06) mostra o alvo em vermelho durante o arraste e não cria o fio.
 - **FR-03 Cortar fio** em 2 passos (Q5): o 1º clique seleciona o fio (fica destacado); um 2º clique
   no mesmo fio, `Del` ou `Backspace` remove. `Esc` ou clique fora cancela. Desfazível (FR-08).
+  - Clique (num fio ou no vazio do canvas) tolera até 4 px de movimento entre apertar e soltar;
+    acima disso o gesto é arrastar o canvas e não conta como clique.
 - **FR-04 Apagar peça** com `Del`/`Backspace` ou botão "Apagar" no inspetor; remove fios ligados. Desfazível.
 - **FR-05 Duplicar peça** com `Ctrl/⌘+D`: copia tipo, instruções e configs; deslocamento +32px; nome com próximo `n`. Não copia fios.
 - **FR-06 Mover peça** por arraste; snap opcional na grade de 16px.
