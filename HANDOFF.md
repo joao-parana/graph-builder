@@ -1,15 +1,20 @@
 # HANDOFF — 2026-11-19 (sessão 8: L06 ui-io, README, GitHub Pages, release v1.1.0)
 
 ## Estado
-- **Roadmap v1 concluído.** L06 e a correção do clique no fio estão em `develop` e `master`
-  (tags `v1.0.0` e `v1.0.1`).
-- **Release `v1.1.0`** (branch `release/v1.1.0`, a partir da `develop`): `README.md`, deploy no
-  GitHub Pages (SPEC §9.2: `paths.base` via `BASE_PATH`, `.github/workflows/pages.yml` a cada push
-  na `master`) e os três `package.json` em `1.1.0`. Endereço: https://joao-parana.github.io/graph-builder/
-  (Pages com Source: GitHub Actions). Primeiro deploy conferido em 2026-11-19: run 44511068205,
-  build e deploy com sucesso; o app abre sem erros.
-- Branches: `master`, `develop` e `claude/bun-homebrew-update-c2a999` (casa da worktree). As
-  branches de camada foram apagadas; as tags `v0.0.1`…`v1.1.0` guardam cada ponto.
+- **`master` = `v1.1.0`** (`e29c5aa`), publicada em https://joao-parana.github.io/graph-builder/.
+  Entregou o `README.md`, o deploy no GitHub Pages (SPEC §9.2: `paths.base` via `BASE_PATH`,
+  `.github/workflows/pages.yml` a cada push na `master` ou disparo manual; Source: GitHub Actions)
+  e os três `package.json` em `1.1.0`. Primeiro deploy conferido: run 44511068205, build e deploy
+  com sucesso; o app abre sem erros.
+- **`develop`** está à frente da `master` só em documentação e comentários (sem release pendente):
+  HANDOFF com o deploy conferido e a data de remoção da exceção do xyflow adiada para 2026-11-21
+  (`bunfig.toml` e este arquivo). Vai para a `master` na próxima release.
+- **Branches:** `master`, `develop` (aberta no checkout principal) e
+  `claude/bun-homebrew-update-c2a999` (casa da worktree, parada em `973dfd4`, atrás da `develop`;
+  trabalho novo sai de branch criada a partir da `develop`). Tags `v0.0.1`…`v1.1.0` no origin.
+- **Roadmap v1 concluído** (L00–L06; L06 em `v1.0.0`, correção do clique no fio em `v1.0.1`).
+
+## Histórico da L06
 - SPEC atualizado antes do código:
   - FR-21: nome do arquivo baixado, toast "Copiado", aba JSON nunca bloqueada.
   - FR-22: arrastar, escolher ou colar; erros do `checkGraph` com `nodes[i]`/`edges[i]`; o grafo
@@ -56,13 +61,20 @@
 - Verificado: e2e completo 3× por navegador → 180/180; antes, 1 falha a cada ~12.
 
 ## Pendências
-- **A partir de 2026-11-21:** apagar `minimumReleaseAgeExcludes` do `bunfig.toml` e o aviso do adendo
-  do ADR-0003.
-- Cobertura de branches da UI: 84,16% (componentes `.svelte` cobertos pelo e2e).
+- **Em 2026-11-21:** remover a exceção do `minimumReleaseAge` para o xyflow. O `@xyflow/svelte`
+  2.0.2 saiu em 2026-11-17 15:53 UTC e só completa os 3 dias em 2026-11-20 15:53 UTC; antes
+  disso, sem a exceção, `bun install --frozen-lockfile` passa, mas qualquer resolução nova
+  (`bun add`, `bun update`, lockfile refeito) falha com "blocked by minimum-release-age". Passos:
+  1. apagar `minimumReleaseAgeExcludes` e o comentário dele do `bunfig.toml`;
+  2. atualizar o adendo da ADR-0003 (linha "Remover a exceção a partir de 2026-11-20"; a frase de
+     que o prazo só liberaria em 2026-11-20 é histórica e fica) e a linha do README em
+     "Problemas resolvidos";
+  3. validar com `bun install --frozen-lockfile` e com uma resolução nova numa cópia do projeto.
+- Cobertura de branches da UI: 84,51% (componentes `.svelte` cobertos pelo e2e).
 - Copiar (clipboard) não tem e2e: precisa de permissão diferente em cada navegador.
 
 ## Próximo passo
-- Roadmap v1 completo. Evoluções do SPEC §11 (v2+) só com SPEC novo.
+- Remover a exceção do xyflow em 2026-11-21 (acima). Evoluções do SPEC §11 (v2+) só com SPEC novo.
 
 ## Gates
 Comando: `{ bun run --filter '*' typecheck && bun run --filter '*' lint && bun run --filter '*' test --coverage && bun run --filter ui e2e ; }`
