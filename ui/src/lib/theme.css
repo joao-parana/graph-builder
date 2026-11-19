@@ -1,0 +1,118 @@
+/* Tema do M1 (SPEC §8): papel, tinta e uma cor por tipo de peça. */
+:root {
+  --paper: #f3eee4;
+  --paper2: #fbf8f2;
+  --ink: #1e1b16;
+  --muted: #6b6457;
+  --line: #d9d1c2;
+  --kind-input: #b08a2e;
+  --kind-worker: #1f3a5f;
+  --kind-supervisor: #8b2323;
+  --kind-delivery: #2f5d3a;
+  --kind-decision: #5b3a7a;
+  --kind-memory: #3e4c59;
+  --mono: ui-monospace, 'SF Mono', Menlo, monospace;
+  --serif: Georgia, 'Times New Roman', serif;
+  --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  font-family: var(--sans);
+  color: var(--ink);
+}
+
+/* Alças (FR-02): entrada/saída; alvo inválido em vermelho durante o arraste. */
+.svelte-flow .svelte-flow__handle.port {
+  width: 11px;
+  height: 11px;
+  border: 1.5px solid var(--ink);
+  background: #fff;
+}
+.svelte-flow .svelte-flow__handle.port.connectingto:not(.valid) {
+  border-color: var(--kind-supervisor);
+  background: #f3c9c9;
+  box-shadow: 0 0 0 3px rgb(139 35 35 / 30%);
+}
+.svelte-flow .svelte-flow__handle.port.connectingto.valid {
+  border-color: var(--kind-delivery);
+  background: #cfe6d3;
+}
+/* Ponto dourado (§3.3): só visual. */
+.svelte-flow .svelte-flow__handle.golden {
+  width: 9px;
+  height: 9px;
+  border: 1.5px solid #b08a2e;
+  background: #d7b65a;
+  cursor: default;
+}
+.svelte-flow .svelte-flow__handle.anchor {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Fios (FR-09). */
+.svelte-flow .wire-flow .svelte-flow__edge-path {
+  stroke: #3b342a;
+  stroke-width: 1.6;
+}
+.svelte-flow .wire-memory .svelte-flow__edge-path {
+  stroke: #7d8794;
+  stroke-width: 1.3;
+  stroke-dasharray: 2 4;
+}
+.svelte-flow .wire-return {
+  pointer-events: none;
+}
+.svelte-flow .wire-return .svelte-flow__edge-path {
+  stroke: var(--kind-supervisor);
+  stroke-width: 1.4;
+  stroke-dasharray: 5 4;
+}
+.svelte-flow .wire.armed .svelte-flow__edge-path {
+  stroke: var(--kind-supervisor);
+  stroke-width: 3;
+}
+.svelte-flow .wire-flow,
+.svelte-flow .wire-memory {
+  cursor: pointer;
+}
+
+/* Rodapé de zoom (FR-07). */
+.svelte-flow .zoombar {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: flex;
+  gap: 2px;
+  padding: 4px;
+  font-size: 12px;
+}
+.zoombar button {
+  border: 0;
+  background: none;
+  font: inherit;
+  padding: 4px 9px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.zoombar button:hover:not(:disabled),
+.zoombar button[aria-pressed='true'] {
+  background: var(--paper);
+}
+.zoombar button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.zoombar .value {
+  font-family: var(--mono);
+  color: var(--muted);
+  padding: 4px 9px;
+  min-width: 52px;
+  text-align: center;
+}

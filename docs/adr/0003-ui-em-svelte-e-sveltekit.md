@@ -100,3 +100,10 @@ quebram.
 - **Riscos:** confirmar no protótipo da L04 que o Svelte Flow atende a NFR-04 (200 peças e
   400 fios a 60 fps). Se não atender, registrar aqui e reavaliar.
 - O core não muda: `packages/core` continua sem dependência de framework (NFR-02).
+
+## Adendo (2026-11-18, L04): exceção de idade mínima para o `@xyflow/svelte`
+O `@xyflow/svelte` 2.0.x saiu em 2026-11-16/17 e depende do `@xyflow/system` 1.0.0, da mesma
+data. O `minimumReleaseAge` de 3 dias (ADR-0002) só os liberaria em 2026-11-20. Para não atrasar a
+L04 nem passar pela linha 1.x, o `bunfig.toml` ganhou
+`minimumReleaseAgeExcludes = ["@xyflow/svelte", "@xyflow/system"]`. Instalado: `@xyflow/svelte`
+2.0.2. **Remover a exceção a partir de 2026-11-20**, quando a versão instalada já cumpre a idade.
