@@ -558,7 +558,19 @@ Escopo da L05: inspetor (FR-10..15) e painel "Antes de exportar" (FR-20); export
 Escopo da L04: o grafo fica só em memória (salvamento automático e botões do topo na L06); o
 painel direito mostra um texto provisório (inspetor na L05).
 
-Merge em `develop` ao fim de cada camada; `main` (branch principal) só em `v1.0.0`.
+Merge em `develop` ao fim de cada camada; `master` (branch principal) só em `v1.0.0`.
+
+Depois da v1 (Git flow): trabalho novo em `feature/…` ou `fix/…` a partir da `develop`, com merge
+nela; a release vai da `develop` para a `master` com tag `vX.Y.Z`. A worktree do Claude fica na
+própria branch (`claude/…`), porque a `develop` está aberta no checkout principal e o Git não abre
+uma branch em dois worktrees.
+
+### 9.2 Deploy (GitHub Pages)
+O build é publicado em `https://joao-parana.github.io/graph-builder/` pelo workflow
+`.github/workflows/pages.yml`, a cada push na `master` (release) ou por disparo manual. O subcaminho
+vem da variável de ambiente `BASE_PATH` (`kit.paths.base`): o workflow usa `/graph-builder`; vazia
+(padrão), o app fica na raiz, como em dev, `vite preview` e e2e. Os grafos ficam no IndexedDB da
+origem `joao-parana.github.io` (banco `graph-builder`).
 
 ### 9.1 Gates (rodar em terminal ZSH separado, saída em `/tmp/gates.txt`)
 O e2e (`bun run --filter ui e2e`, a partir da L04) usa o Google Chrome instalado

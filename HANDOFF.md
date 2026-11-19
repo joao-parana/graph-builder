@@ -1,11 +1,16 @@
-# HANDOFF — 2026-11-19 (sessão 8: L06 ui-io)
+# HANDOFF — 2026-11-19 (sessão 8: L06 ui-io, README, GitHub Pages, release v1.1.0)
 
 ## Estado
-- Camada atual: **L06 ui-io — gate verde (e2e em Chrome, Firefox e WebKit)** em
-  `feature/layer-06-ui-io`. A L06 já tem commit (`40cf603`); a correção do clique no fio (abaixo)
-  ainda **não tem commit**. Falta merge em `develop`, tag `v1.0.0` e merge em `main`.
-- `version` já em `1.0.0` nos três `package.json`; `bun.lock` atualizado.
-- Tags existentes: `v0.0.1` … `v0.5.0`. A `v1.0.0` fecha o roadmap do SPEC §9 e vai para `main`.
+- **Roadmap v1 concluído.** L06 e a correção do clique no fio estão em `develop` e `master`
+  (tags `v1.0.0` e `v1.0.1`).
+- **Release `v1.1.0`** (branch `release/v1.1.0`, a partir da `develop`): `README.md`, deploy no
+  GitHub Pages (SPEC §9.2: `paths.base` via `BASE_PATH`, `.github/workflows/pages.yml` a cada push
+  na `master`) e os três `package.json` em `1.1.0`. Endereço: https://joao-parana.github.io/graph-builder/
+  (exige Settings → Pages → Source: GitHub Actions).
+- Branches (limpeza de 2026-11-19): só `master`, `develop` e `claude/bun-homebrew-update-c2a999`
+  (casa da worktree, alinhada com a `develop`). As branches de camada foram apagadas; as tags
+  `v0.0.1`…`v1.0.1` guardam cada ponto. Correção em andamento: `fix/docs-master-branch`
+  (SPEC §9 e este arquivo diziam `main`; a branch principal é a `master`).
 - SPEC atualizado antes do código:
   - FR-21: nome do arquivo baixado, toast "Copiado", aba JSON nunca bloqueada.
   - FR-22: arrastar, escolher ou colar; erros do `checkGraph` com `nodes[i]`/`edges[i]`; o grafo
@@ -15,7 +20,7 @@
   - FR-31: ordem, data ("hoje, HH:MM"), renomear na linha, Duplicar com " (cópia)", apagar o aberto.
   - FR-33: título do topo se comporta como o campo Nome do grafo.
   - Modais: `<dialog>` nativo, Esc/✕, foco volta ao botão; atalhos param com modal aberto.
-  - §7.2: `DuplicateGraph` e `RenameGraph`. §9: escopo da L06; `master` → `main`.
+  - §7.2: `DuplicateGraph` e `RenameGraph`. §9: escopo da L06 e fluxo de branches depois da v1.
 
 ### O que a L06 entrega
 - Core: `duplicateGraph(ctx, graph)` e `renameGraph(ctx, repo, id, name)` em `application/library.ts`.
@@ -52,7 +57,7 @@
 - Verificado: e2e completo 3× por navegador → 180/180; antes, 1 falha a cada ~12.
 
 ## Pendências
-- Commit da correção do clique no fio, merge em `develop`, tag `v1.0.0`, merge em `main`.
+- Conferir o primeiro run do workflow "Deploy no GitHub Pages" depois do push da `master`.
 - **A partir de 2026-11-20:** apagar `minimumReleaseAgeExcludes` do `bunfig.toml` e o aviso do adendo
   do ADR-0003.
 - Cobertura de branches da UI: 84,16% (componentes `.svelte` cobertos pelo e2e).
@@ -63,16 +68,16 @@
 
 ## Gates
 Comando: `{ bun run --filter '*' typecheck && bun run --filter '*' lint && bun run --filter '*' test --coverage && bun run --filter ui e2e ; }`
-(resumo da saída, 2026-11-18)
+(resumo da saída, 2026-11-19, `release/v1.1.0`)
 ```
 @graph-builder/core typecheck: Exited with code 0
 ui typecheck: COMPLETED 608 FILES 0 ERRORS 0 WARNINGS 0 FILES_WITH_PROBLEMS
 @graph-builder/core lint: Exited with code 0
 ui lint: Exited with code 0
 @graph-builder/core test:       Tests  253 passed (253)
-@graph-builder/core test: Branches     : 98.02% ( 397/405 )
+@graph-builder/core test: Branches     : 98.27% ( 398/405 )
 ui test:       Tests  108 passed (108)
 ui test: Branches     : 84.51% ( 191/226 )
-ui e2e:   60 passed (48.3s)
+ui e2e:   60 passed (1.2m)
 ```
 Extra: `prettier --check .` → sem problemas; `playwright test --repeat-each=3` → 180 passed.
