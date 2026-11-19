@@ -6,11 +6,10 @@
 - **Release `v1.1.0`** (branch `release/v1.1.0`, a partir da `develop`): `README.md`, deploy no
   GitHub Pages (SPEC §9.2: `paths.base` via `BASE_PATH`, `.github/workflows/pages.yml` a cada push
   na `master`) e os três `package.json` em `1.1.0`. Endereço: https://joao-parana.github.io/graph-builder/
-  (exige Settings → Pages → Source: GitHub Actions).
-- Branches (limpeza de 2026-11-19): só `master`, `develop` e `claude/bun-homebrew-update-c2a999`
-  (casa da worktree, alinhada com a `develop`). As branches de camada foram apagadas; as tags
-  `v0.0.1`…`v1.0.1` guardam cada ponto. Correção em andamento: `fix/docs-master-branch`
-  (SPEC §9 e este arquivo diziam `main`; a branch principal é a `master`).
+  (Pages com Source: GitHub Actions). Primeiro deploy conferido em 2026-11-19: run 44511068205,
+  build e deploy com sucesso; o app abre sem erros.
+- Branches: `master`, `develop` e `claude/bun-homebrew-update-c2a999` (casa da worktree). As
+  branches de camada foram apagadas; as tags `v0.0.1`…`v1.1.0` guardam cada ponto.
 - SPEC atualizado antes do código:
   - FR-21: nome do arquivo baixado, toast "Copiado", aba JSON nunca bloqueada.
   - FR-22: arrastar, escolher ou colar; erros do `checkGraph` com `nodes[i]`/`edges[i]`; o grafo
@@ -57,7 +56,6 @@
 - Verificado: e2e completo 3× por navegador → 180/180; antes, 1 falha a cada ~12.
 
 ## Pendências
-- Conferir o primeiro run do workflow "Deploy no GitHub Pages" depois do push da `master`.
 - **A partir de 2026-11-20:** apagar `minimumReleaseAgeExcludes` do `bunfig.toml` e o aviso do adendo
   do ADR-0003.
 - Cobertura de branches da UI: 84,16% (componentes `.svelte` cobertos pelo e2e).
