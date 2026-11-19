@@ -1,6 +1,6 @@
 # ADR-0004 — Conta e grafos na nuvem com Supabase (v2)
 
-- **Status:** Proposto (2026-11-19)
+- **Status:** Aceito (2026-11-19)
 - **Data:** 2026-11-19
 - **Contexto da spec:** SPEC.md §1, §4 (FR-50..56), §5 (NFR-05, NFR-09, NFR-10), §7, §7.4, §9, §12
   (Q7–Q9)
@@ -114,5 +114,6 @@ código do servidor de auth (`supabase/auth` v2.198.0, de 2026-11-16):
    (FR-51).
 
 **Decisão:** o convite pelo painel basta; o *auth hook* "before user created" não é necessário. O
-gate da L07 confirma isso na prática, contra o Supabase local (convidado entra; não convidado
-recebe `signup_disabled`); o da L09, no projeto real.
+gate da L08 confirma isso à mão, contra o Supabase local com um OAuth App de desenvolvimento
+(convidado entra; não convidado recebe `signup_disabled`); o da L09, no projeto real. A L07 não tem
+tela de login e o OAuth do GitHub não é automatizável.

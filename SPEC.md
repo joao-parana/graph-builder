@@ -646,7 +646,7 @@ Entrega `#2F5D3A` · Decisão `#5B3A7A` · Memória `#3E4C59`. Fundo papel `#F3E
 | 05 | `feature/layer-05-ui-panels` | inspetores M2–M5, painel "Antes de exportar" | Playwright: validação ao vivo | `v0.5.0` |
 | 06 | `feature/layer-06-ui-io` | modais M6–M8, Meus grafos, autosave | Playwright: export→import ida e volta | `v1.0.0` |
 | 07 | `feature/layer-07-cloud-infra` | migrations + RLS (§7.4), `SupabaseGraphRepository`, `SupabaseAuthGateway`, `copyGraph` | integração contra o Supabase local, incluindo RLS entre dois usuários; cobertura (NFR-03) | `v1.2.0` |
-| 08 | `feature/layer-08-ui-account` | Entrar/Sair, seletor de modo, Meus grafos por modo, copiar entre modos, erros de rede e sessão (FR-50..56) | Playwright com Supabase local | `v1.3.0` |
+| 08 | `feature/layer-08-ui-account` | Entrar/Sair, seletor de modo, Meus grafos por modo, copiar entre modos, erros de rede e sessão (FR-50..56) | Playwright com Supabase local; login real pelo GitHub no Supabase local (convidado entra, não convidado → `signup_disabled`, Q7) | `v1.3.0` |
 | 09 | `feature/layer-09-cloud-release` | variáveis no Actions, URLs de retorno no Supabase, CSP, README, deploy | login real conferido no Pages com um convidado e um não convidado | `v2.0.0` |
 
 Escopo da L06: barra do topo (FR-33), modais M6–M8, Limpar, Ajuda e salvamento automático (FR-21,
@@ -672,6 +672,8 @@ O e2e (`bun run --filter ui e2e`, a partir da L04) usa o Google Chrome instalado
 ```zsh
 { bun run --filter '*' typecheck && bun run --filter '*' lint && bun run --filter '*' test --coverage && bun run --filter ui e2e ; } 2>&1 | tee /tmp/gates.txt
 ```
+A partir da L07, o gate roda com o Supabase local no ar (`bun run db:start` antes; Docker). Sem ele,
+os testes da nuvem são pulados com aviso e a cobertura da `infrastructure` não vale como gate.
 
 ### 9.2 Deploy (GitHub Pages)
 O build é publicado em `https://joao-parana.github.io/graph-builder/` pelo workflow
@@ -695,6 +697,10 @@ origem `joao-parana.github.io` (banco `graph-builder`).
   (fake) e no `SupabaseGraphRepository` (Supabase local); testes de RLS com dois usuários (um não lê,
   não grava e não apaga o grafo do outro; sem sessão, nada); e2e do modo nuvem com sessão injetada
   (Q9).
+  - Os testes leem a URL e as chaves do `supabase status` local; a *service role key* só cria e
+    apaga usuários de teste. Sem o Supabase local no ar, esses testes são pulados com aviso.
+  - `bun run db:start` / `db:stop` / `db:reset` (raiz) sobem, param e recriam o banco local a partir
+    de `supabase/migrations/`.
 
 ---
 
@@ -717,7 +723,7 @@ origem `joao-parana.github.io` (banco `graph-builder`).
 | Q3 | Supervisor pode julgar uma Entrega (não só Trabalhador)? | **Resolvida:** sim. Julga `Flow` vindo de Trabalhador, Entrega ou Supervisor (em série, com construtores por recursão); Entrada não (§3.3) | L01 |
 | Q4 | Gerenciador de pacotes: pnpm ou bun? | **Resolvida:** Bun ≥ 1.3, só para pacotes e scripts (ADR-0002) | L00 |
 | Q5 | Cortar fio com 1 clique (como diz a ajuda original) ou 2? | **Resolvida:** 2 passos (clique seleciona; 2º clique ou `Del` remove) + undo (FR-03) | L04 |
-| Q7 | Com cadastro fechado, o login pelo GitHub entra no usuário convidado por e-mail (vínculo automático de identidades)? | **Resolvida** (código do `supabase/auth` v2.198.0, ADR-0004): sim, se o e-mail do convite for um dos e-mails **verificados** da conta do GitHub; o convidado não precisa abrir o convite. Sem convite → `signup_disabled`. Sem *auth hook*. Conferir no gate da L07 (Supabase local) | L07 |
+| Q7 | Com cadastro fechado, o login pelo GitHub entra no usuário convidado por e-mail (vínculo automático de identidades)? | **Resolvida** (código do `supabase/auth` v2.198.0, ADR-0004): sim, se o e-mail do convite for um dos e-mails **verificados** da conta do GitHub; o convidado não precisa abrir o convite. Sem convite → `signup_disabled`. Sem *auth hook*. Conferir à mão no gate da L08 (Supabase local + OAuth App de dev) | L07 |
 | Q8 | Onde o navegador lembra o último modo (FR-53)? | `localStorage` (`graph-builder:mode`); sem sessão válida, sempre local | L08 |
 | Q9 | Como o e2e entra na nuvem, se o GitHub OAuth não é automatizável? | O teste cria o usuário pela API admin do Supabase local e injeta a sessão (`storageState`); o botão "Entrar" só é conferido até o redirecionamento | L08 |
 | Q6 | Presets extras além de "Resultado WOW" e "Sem erros" | **Resolvida:** os 4 presets do FR-12, com ids e textos definidos (o `ToggleBarPreset` da L02 precisa deles) | L05 |
