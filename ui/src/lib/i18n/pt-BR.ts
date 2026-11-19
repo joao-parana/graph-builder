@@ -139,6 +139,97 @@ export const ptBR = {
       (params: Readonly<Record<string, string | undefined>>) => string
     >,
   },
+  /** Barra do topo (M1, FR-30, FR-33). */
+  top: {
+    title: 'Nome do grafo',
+    saved: '● salvo',
+    saving: 'salvando…',
+    unsaved: 'não salvo',
+    saveFailed: 'Não foi possível salvar no navegador',
+    help: 'Ajuda',
+    library: 'Meus grafos',
+    importJson: 'Abrir JSON',
+    clear: 'Limpar',
+    export: 'Exportar para a IA',
+  },
+  modal: {
+    close: 'Fechar',
+    cancel: 'Cancelar',
+  },
+  /** M6 (FR-21). */
+  exporter: {
+    title: 'Exportar para a IA',
+    promptTab: 'Prompt (.md)',
+    jsonTab: 'JSON',
+    blocked: 'Corrija antes de exportar:',
+    warnings: (n: number) =>
+      n === 0
+        ? 'determinístico: o mesmo grafo gera sempre o mesmo texto.'
+        : `${n === 1 ? '1 alerta não bloqueia' : `${String(n)} alertas não bloqueiam`} a exportação · determinístico: o mesmo grafo gera sempre o mesmo texto.`,
+    downloadMd: 'Baixar .md',
+    copyPrompt: 'Copiar prompt',
+    downloadJson: 'Baixar .json',
+    copyJson: 'Copiar JSON',
+    copied: 'Copiado',
+    copyFailed: 'O navegador não deixou copiar',
+  },
+  /** M8 (FR-22). */
+  importer: {
+    title: 'Abrir JSON',
+    drop: 'Arraste um arquivo .json aqui, clique para escolher, ou cole o texto abaixo.',
+    choose: 'Escolher arquivo',
+    text: 'Texto JSON',
+    problems: (n: number) =>
+      `Não foi possível abrir (${n === 1 ? '1 problema' : `${String(n)} problemas`}):`,
+    open: 'Abrir grafo',
+    readFailed: 'Não foi possível ler o arquivo',
+    opened: (name: string) => `"${name}" aberto`,
+  },
+  /** M7 (FR-31). */
+  library: {
+    title: 'Meus grafos',
+    newGraph: '+ Novo grafo',
+    name: 'Nome',
+    pieces: 'Peças',
+    updated: 'Atualizado',
+    actions: 'Ações',
+    open: 'Abrir',
+    rename: 'Renomear',
+    duplicate: 'Duplicar',
+    delete: 'Apagar',
+    confirmDelete: 'Apagar de vez',
+    current: 'aberto',
+    renameLabel: (name: string) => `Novo nome para ${name}`,
+    today: (time: string) => `hoje, ${time}`,
+    yesterday: (time: string) => `ontem, ${time}`,
+    empty: 'Nenhum grafo salvo ainda.',
+  },
+  /** FR-32. */
+  clear: {
+    title: 'Limpar o grafo',
+    message: 'Isso apaga todas as peças deste grafo.',
+    hint: 'Dá para desfazer com ⌘Z.',
+    confirm: 'Limpar',
+  },
+  /** FR-40. */
+  help: {
+    title: 'Ajuda',
+    pieces: 'Peças',
+    howToLink: 'Como ligar',
+    howToLinkText: [
+      'Arraste da bolinha da direita de uma peça até a bolinha da esquerda de outra.',
+      'O tipo do fio sai das pontas: para a Memória é escrita; da Memória, consulta; da Decisão, um caminho com condição.',
+      'O Supervisor devolve ao(s) construtor(es) pelo fio tracejado vermelho, sem ligação manual.',
+      'Clique num fio para selecioná-lo; clique de novo (ou Del) para cortar.',
+    ],
+    shortcuts: 'Atalhos',
+    shortcutList: [
+      ['Del', 'apaga a peça ou o fio selecionado'],
+      ['⌘D', 'duplica a seleção'],
+      ['⌘Z / ⇧⌘Z', 'desfaz / refaz'],
+      ['Esc', 'cancela o fio selecionado'],
+    ],
+  },
   /** Motivo mostrado no toast quando o domínio recusa um comando (FR-08). */
   errors: {
     'INV-01': 'Só uma Entrada por grafo',

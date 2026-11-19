@@ -7,6 +7,7 @@ import {
   autoLayout,
   canRedo,
   canUndo,
+  clearGraph,
   connectNodes,
   createGraph,
   dagreLayoutEngine,
@@ -57,8 +58,11 @@ const snapTo = (value: number): number => Math.round(value / GRID_SIZE) * GRID_S
 const sameIds = (a: readonly string[], b: readonly string[]): boolean =>
   a.length === b.length && a.every((id, index) => id === b[index]);
 
+export type Viewport = Graph['viewport'];
+
 export class Editor {
-  private readonly ctx: EditContext;
+  /** Público: a biblioteca (FR-31) usa o mesmo relógio e gerador de ids. */
+  readonly ctx: EditContext;
   private readonly layoutEngine: LayoutEngine;
 
   history: History;
@@ -70,6 +74,19 @@ export class Editor {
   /** FR-07: Foco oculta paleta e inspetor. */
   focus = $state(false);
   toast: Toast | null = $state(null);
+  /** FR-30: pan/zoom do canvas; salvo com o grafo, fora do desfazer. */
+  viewport: Viewport = $state.raw({ x: 0, y: 0, zoom: 1 });
+  /** Muda a cada `load`: o canvas reaplica o viewport salvo. */
+  loads = $state(0);
+
+  /** O que o salvamento automático grava (FR-30). */
+  get snapshot(): Graph {
+    const graph = this.graph;
+    const v = this.viewport;
+    const same =
+      graph.viewport.x === v.x && graph.viewport.y === v.y && graph.viewport.zoom === v.zoom;
+    return same ? graph : { ...graph, viewport: v };
+  }
 
   /** Getters leem `history` ($state.raw): continuam reativos. */
   get graph(): Graph {
@@ -253,6 +270,23 @@ export class Editor {
   /** FR-12. */
   togglePreset(id: NodeId, preset: BarPresetId): boolean {
     return this.commit(toggleBarPreset(this.ctx, this.graph, id, preset));
+  }
+
+  /** FR-32: um passo de desfazer. */
+  clear(): boolean {
+    const done = this.commit(clearGraph(this.ctx, this.graph));
+    if (done) this.select([]);
+    return done;
+  }
+
+  /** FR-30, FR-31: troca o grafo aberto; o histórico recomeça. */
+  load(graph: Graph): void {
+    this.history = startHistory(graph);
+    this.editKey = null;
+    this.armedEdgeId = null;
+    this.selectedNodeIds = [];
+    this.viewport = graph.viewport;
+    this.loads += 1;
   }
 
   /** FR-08. */

@@ -263,6 +263,9 @@ Formato: **FR-xx** · descrição · critérios de aceite (Dado/Quando/Então).
 - **FR-21 Exportar para a IA** abre modal com abas **Prompt** e **JSON**:
   - Se houver erros (§3.5), a aba Prompt mostra a lista e os botões ficam desabilitados.
   - Ações: **Copiar**, **Baixar `.md`** / **Baixar `.json`**.
+  - Arquivo baixado: nome do grafo sem caracteres proibidos em nome de arquivo (`/\:*?"<>|` e
+    controles viram `-`), ou `grafo` se ficar vazio. Copiar mostra o toast "Copiado".
+  - A aba JSON nunca é bloqueada: o JSON guarda o grafo como está, inclusive com erros.
   - Prompt gerado segue o template do §6 e é **determinístico** (ordem topológica estável; empate por posição `x`, depois `y`, depois `id`).
 - **FR-22 Abrir JSON**: importa arquivo `.json` (ou colar texto). Valida com o schema; erros exibidos com caminho do campo. Migra `schemaVersion` antigas quando houver.
   - Formato (`GraphCodec`, L03): o `Graph` do §3.1 em JSON com 2 espaços de recuo, chaves em ordem
@@ -273,15 +276,36 @@ Formato: **FR-xx** · descrição · critérios de aceite (Dado/Quando/Então).
     ficam para o `checkGraph` do `ImportJson`.
   - Só existe a versão 1: `schemaVersion` ausente ou diferente → item no caminho `schemaVersion`.
     Uma versão nova traz a sua migração.
+  - Entrada: arrastar um arquivo, escolher pelo botão ou colar o texto. O botão **Abrir grafo** fica
+    desabilitado com o texto vazio. Erros do `checkGraph` aparecem com o caminho `nodes[i]` ou
+    `edges[i]` e o código do invariante.
+  - Grafo válido: é salvo como um grafo novo (`ImportJson`) e aberto; o histórico de desfazer zera.
 
 ### Persistência
 - **FR-30 Salvamento automático** no IndexedDB a cada mudança (debounce 500 ms). Indicador "Salvo" no topo.
+  - Indicador: "● salvo" ou "salvando…"; se o IndexedDB falhar, "não salvo" com toast do motivo.
+  - Ao iniciar, abre o grafo mais recente (`ListGraphs`); sem nenhum, cria um e o salva.
+  - O `viewport` (pan/zoom) é salvo junto, mas não entra no desfazer nem muda `updatedAt`; ao abrir um
+    grafo, o canvas volta ao `viewport` salvo.
+  - Trocar de grafo (abrir, novo, importar) grava antes o que estiver pendente e zera o histórico.
 - **FR-31 Meus grafos**: modal com lista (nome, nº de peças, atualizado em), ações Abrir, Renomear, Duplicar, Apagar (com confirmação), **Novo grafo**.
+  - Lista do mais recente para o mais antigo; a linha do grafo aberto fica destacada.
+  - "Atualizado": `hoje, HH:MM`, `ontem, HH:MM` ou `DD/MM/AAAA` (hora local).
+  - Renomear: o nome vira um campo na própria linha (Enter grava, Esc cancela); nome inválido
+    (INV-09) mostra o motivo. No grafo aberto, renomear é uma edição desfazível.
+  - Duplicar (`DuplicateGraph`): id novo, nome "{nome} (cópia)" (cortando o nome original para
+    caber em 80 caracteres); não abre a cópia.
+  - Apagar o grafo aberto abre o mais recente que sobrar, ou um novo.
 - **FR-32 Limpar**: esvazia o grafo atual após confirmação ("Isso apaga todas as peças deste grafo"). Desfazível.
 - **FR-33 Título do grafo** no centro do topo, editável inline.
+  - Mesmo comportamento do campo Nome do grafo do inspetor (FR-10): um passo de desfazer, erro
+    embaixo, volta ao sair se inválido.
 
 ### Ajuda
 - **FR-40 "?"** abre painel com: descrição das peças, "Como ligar" e atalhos (o mesmo conteúdo da coluna esquerda da captura).
+
+Modais (FR-21, FR-22, FR-31, FR-32, FR-40): `<dialog>` nativo; Esc e ✕ fecham; o foco fica dentro
+do modal e volta ao botão que o abriu. Atalhos do editor não agem com um modal aberto.
 
 ---
 
@@ -470,6 +494,10 @@ Contratos (L02):
   e `updatedAt = now` (não sobrescreve um grafo salvo).
 - Undo/redo (FR-08): histórico em memória com 100 passos; comando sem mudança não entra. A UI
   registra o arraste de peça uma vez, ao soltar.
+- `DuplicateGraph` (L06): função pura `duplicateGraph(ctx, graph)`; id novo, nome com " (cópia)",
+  `createdAt = updatedAt = now`; peças, fios e viewport iguais.
+- `RenameGraph` (L06): `renameGraph(ctx, repo, id, name)` abre, aplica `UpdateGraph` e salva; grafo
+  inexistente → `null`; nome inválido → `INV-09`.
 - `amend(history, next)` (L05): troca o grafo atual sem criar passo novo nem mexer no `past`; limpa
   o `future`. Usado para juntar as edições de um campo num passo só.
 
@@ -520,16 +548,19 @@ Entrega `#2F5D3A` · Decisão `#5B3A7A` · Memória `#3E4C59`. Fundo papel `#F3E
 | 05 | `feature/layer-05-ui-panels` | inspetores M2–M5, painel "Antes de exportar" | Playwright: validação ao vivo | `v0.5.0` |
 | 06 | `feature/layer-06-ui-io` | modais M6–M8, Meus grafos, autosave | Playwright: export→import ida e volta | `v1.0.0` |
 
+Escopo da L06: barra do topo (FR-33), modais M6–M8, Limpar, Ajuda e salvamento automático (FR-21,
+FR-22, FR-30..33, FR-40); e2e em Chrome, Firefox e WebKit (Safari) do Playwright.
+
 Escopo da L05: inspetor (FR-10..15) e painel "Antes de exportar" (FR-20); exportação e modais na L06.
 
 Escopo da L04: o grafo fica só em memória (salvamento automático e botões do topo na L06); o
 painel direito mostra um texto provisório (inspetor na L05).
 
-Merge em `develop` ao fim de cada camada; `master` (branch principal) só em `v1.0.0`.
+Merge em `develop` ao fim de cada camada; `main` (branch principal) só em `v1.0.0`.
 
 ### 9.1 Gates (rodar em terminal ZSH separado, saída em `/tmp/gates.txt`)
 O e2e (`bun run --filter ui e2e`, a partir da L04) usa o Google Chrome instalado
-(`channel: 'chrome'`, NFR-08); Firefox e Safari entram na L06.
+(`channel: 'chrome'`, NFR-08); a partir da L06 também Firefox e WebKit (motor do Safari) do Playwright.
 ```zsh
 { bun run --filter '*' typecheck && bun run --filter '*' lint && bun run --filter '*' test --coverage && bun run --filter ui e2e ; } 2>&1 | tee /tmp/gates.txt
 ```

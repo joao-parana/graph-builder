@@ -27,14 +27,9 @@ async function link(page: Page, from: string, to: string) {
   await page.mouse.up();
 }
 
-/** Clica no meio do fio (após Arrumar, os fios são retos). */
+/** Clica no meio do fio, no traçado largo de interação (após Arrumar, os fios são retos). */
 async function clickWire(page: Page, index = 0) {
-  const path = wires(page).nth(index).locator('.svelte-flow__edge-path');
-  await expect(path).toBeVisible();
-  const box = await path.boundingBox();
-  if (box === null) throw new Error('fio sem caixa');
-  const point = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
-  await page.mouse.click(point.x, point.y);
+  await wires(page).nth(index).locator('.svelte-flow__edge-interaction').click();
 }
 
 async function arrange(page: Page) {

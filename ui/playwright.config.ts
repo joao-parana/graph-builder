@@ -1,5 +1,5 @@
-// E2E (SPEC §9, §10): app de produção servido pelo `vite preview`, no Google Chrome instalado
-// (NFR-08; Firefox e Safari entram na L06).
+// E2E (SPEC §9, §10): app de produção servido pelo `vite preview`, no Google Chrome instalado e no
+// Firefox e WebKit (motor do Safari) do Playwright (NFR-08).
 import { defineConfig, devices } from '@playwright/test';
 
 const PORT = 4173;
@@ -22,6 +22,14 @@ export default defineConfig({
         channel: 'chrome',
         viewport: { width: 1440, height: 900 },
       },
+    },
+    {
+      name: 'firefox',
+      use: { ...devices['Desktop Firefox'], viewport: { width: 1440, height: 900 } },
+    },
+    {
+      name: 'webkit',
+      use: { ...devices['Desktop Safari'], viewport: { width: 1440, height: 900 } },
     },
   ],
   webServer: {

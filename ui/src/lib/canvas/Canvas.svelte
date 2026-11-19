@@ -7,6 +7,7 @@
     type NodeTypes,
     SvelteFlow,
   } from '@xyflow/svelte';
+  import { untrack } from 'svelte';
   import { edgeId, nodeId } from '@graph-builder/core';
   import { ptBR } from '#lib/i18n/pt-BR.ts';
   import type { Editor } from '#lib/state/editor.svelte.ts';
@@ -33,7 +34,9 @@
 
   let nodes: PieceNode[] = $state.raw([]);
   let edges: Wire[] = $state.raw([]);
-  let zoom = $state(1);
+  /** Viewport salvo do grafo aberto; o canvas remonta a cada grafo aberto (FR-30). */
+  const initial = untrack(() => editor.viewport);
+  let zoom = $state(initial.zoom);
 
   $effect.pre(() => {
     nodes = toFlowNodes(editor.graph, editor.selectedNodeIds, flagged);
@@ -83,7 +86,11 @@
     }}
     onnodedragstop={({ nodes: dragged }) =>
       editor.moveNodes(dragged.map((n) => ({ id: nodeId(n.id), position: n.position })))}
+    initialViewport={initial}
     onmove={(_, viewport) => (zoom = viewport.zoom)}
+    onmoveend={(_, viewport) => {
+      editor.viewport = { x: viewport.x, y: viewport.y, zoom: viewport.zoom };
+    }}
   >
     <Background
       variant={BackgroundVariant.Dots}

@@ -9,6 +9,7 @@
     placeholder = '',
     type = 'text',
     warning = null,
+    hideLabel = false,
     onedit,
     onend,
   }: {
@@ -20,6 +21,8 @@
     type?: 'text' | 'number';
     /** Aviso persistente (ex.: condição vazia, FR-13). */
     warning?: string | null;
+    /** Rótulo só para leitores de tela (título do topo, FR-33). */
+    hideLabel?: boolean;
     /** Devolve o motivo da recusa, ou `null` se o valor entrou. */
     onedit: (text: string) => string | null;
     onend: () => void;
@@ -49,7 +52,7 @@
 </script>
 
 <div class="field">
-  <label class="label" for={id}>{label}</label>
+  <label class="label" class:sr-only={hideLabel} for={id}>{label}</label>
   {#if multiline}
     <textarea
       {id}
