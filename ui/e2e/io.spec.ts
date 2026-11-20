@@ -1,6 +1,6 @@
 // Gate da L06 (SPEC §9): exportar → importar ida e volta, Meus grafos, Limpar e autosave.
 import { readFile } from 'node:fs/promises';
-import { expect, type Locator, type Page, test } from '@playwright/test';
+import { expect, type Locator, type Page, test } from './csp.ts';
 
 const palette = (page: Page, label: string) =>
   page.locator('.palette').getByRole('button', { name: new RegExp(`^${label}`, 'u') });
