@@ -404,7 +404,7 @@ Textos da v2 (NFR-06: em `ui/src/lib/i18n/pt-BR.ts`, na chave `cloud`):
 | NFR-06 | UI em pt-BR; textos centralizados em `ui/src/lib/i18n/pt-BR.ts`. |
 | NFR-07 | Acessibilidade: todas as ações da paleta/inspetor por teclado; foco visível; contraste AA. |
 | NFR-08 | Navegadores: Chrome, Safari e Firefox atuais. |
-| NFR-09 | Segurança da nuvem (v2): RLS ativo em toda tabela, com política por dono (`owner_id = auth.uid()`); cadastro público desligado; só a URL e a chave pública do Supabase vão no bundle (nunca a *service role key*); sem `{@html}` com dado do usuário; CSP por `<meta>`. |
+| NFR-09 | Segurança da nuvem (v2): RLS ativo em toda tabela, com política por dono (`owner_id = auth.uid()`); cadastro público desligado; só a URL e a chave pública do Supabase vão no bundle (nunca a *service role key*); sem `{@html}` com dado do usuário; CSP por `<meta>` (§9.4). |
 | NFR-10 | Testes da nuvem (v2) rodam contra o Supabase local (Supabase CLI, Docker), nunca contra o projeto de produção; o esquema e as políticas vêm só de `supabase/migrations/`. |
 
 ---
@@ -685,7 +685,7 @@ Escopo da L05: inspetor (FR-10..15) e painel "Antes de exportar" (FR-20); export
 Escopo da L04: o grafo fica só em memória (salvamento automático e botões do topo na L06); o
 painel direito mostra um texto provisório (inspetor na L05).
 
-Escopo da v2 (L07–L09): §1.3, FR-50..56, NFR-09/10, §7.4. Q7, Q8 e Q9 resolvidas (§12); variáveis do build em §9.3.
+Escopo da v2 (L07–L09): §1.3, FR-50..56, NFR-09/10, §7.4. Q7, Q8 e Q9 resolvidas (§12); variáveis do build em §9.3; CSP em §9.4; gate manual da L09 em §9.5.
 
 Merge em `develop` ao fim de cada camada; `master` (branch principal) só em `v1.0.0`.
 
@@ -738,6 +738,64 @@ origem `joao-parana.github.io` (banco `graph-builder`).
 - **Dev e e2e com nuvem:** os valores vêm do `supabase status` local, por script
   (`bun run --filter ui dev:cloud`), nunca de arquivo versionado. Arquivos `.env*` ficam no
   `.gitignore`.
+
+### 9.4 CSP (v2, L09; NFR-09)
+O GitHub Pages não deixa definir cabeçalhos, então a CSP vai numa `<meta http-equiv>` no
+`index.html`, gerada pelo `kit.csp` do SvelteKit (`mode: 'hash'`). O `index.html` é o *fallback*
+do `adapter-static`, renderizado no build: o SvelteKit calcula o hash do script inline de
+inicialização e o põe no `script-src`. A `<meta>` vale onde o `build/` é servido como arquivo
+estático (Pages, outra hospedagem). O `vite preview` (e2e) e o `vite dev` renderizam a página na
+hora e mandam as mesmas diretivas por cabeçalho; o `vite dev` ainda libera estilos inline.
+
+| Diretiva | Valor | Por quê |
+|---|---|---|
+| `default-src` | `'self'` | o resto vem só da origem do app |
+| `script-src` | `'self'` + hash do script inline (automático) | sem `'unsafe-inline'` nem `'unsafe-eval'`: o que barra XSS |
+| `style-src` | `'self' 'unsafe-inline'` | o `@xyflow/svelte` e as diretivas `style:` do Svelte usam atributos `style` |
+| `img-src` | `'self' data:` | sem imagens de fora (avatar do GitHub não é usado; NFR-05) |
+| `font-src` | `'self'` | sem fontes de fora |
+| `connect-src` | `'self'` + origem de `PUBLIC_SUPABASE_URL`, se houver | NFR-05: só o projeto Supabase recebe dados |
+| `object-src` | `'none'` | sem plugins |
+| `base-uri` | `'self'` | barra `<base>` injetado |
+| `form-action` | `'none'` | o app não envia formulários; o login é um redirecionamento |
+
+- A origem do Supabase é `new URL(PUBLIC_SUPABASE_URL).origin` (ex.: `https://<ref>.supabase.co`;
+  local, `http://127.0.0.1:54321`). Sem as variáveis (build só local, FR-50), o `connect-src` é só
+  `'self'`. Só HTTP: o app não usa Realtime (sem `wss:`).
+- As diretivas saem de uma função pura `cspDirectives(supabaseUrl?)` em `ui/src/lib/cloud/csp.ts`,
+  chamada pelo `vite.config.ts` (como `checkSupabasePair`), com teste unitário.
+- `frame-ancestors`, `report-uri` e `sandbox` não funcionam em `<meta>`: sem proteção contra
+  *clickjacking* no Pages (risco aceito: não há ação de um clique só que cause dano sem
+  confirmação). Sem `upgrade-insecure-requests`, que quebraria o Supabase local em `http://`.
+- O `zod` 4 testa `new Function` para compilar validadores; com a CSP isso falha e ele usa o modo
+  sem JIT. Para não gerar violação no console, o core liga `jitless` na configuração do `zod`.
+- **e2e:** o `build/index.html` tem a `<meta>` e o `vite preview` manda o cabeçalho, os dois com o
+  hash no `script-src` e o `connect-src` esperado. Os specs importam `test` de `ui/e2e/csp.ts`,
+  cuja fixture automática faz qualquer teste falhar se houver um `securitypolicyviolation`.
+
+### 9.5 Gate manual da L09 (produção)
+Pré-requisitos (feitos pelo usuário, sem segredo no repositório):
+- projeto Supabase de produção com `supabase/migrations/` aplicadas, cadastro desligado ("Allow new
+  users to sign up"), Site URL e URL de retorno `https://joao-parana.github.io/graph-builder/`;
+- OAuth App de produção no GitHub com o callback `https://<ref>.supabase.co/auth/v1/callback`; o
+  *client id* e o *secret* ficam só no painel do Supabase;
+- *variables* `PUBLIC_SUPABASE_URL` e `PUBLIC_SUPABASE_KEY` (chave pública) no repositório do
+  GitHub; release na `master` e deploy do Pages concluído;
+- um usuário convidado no painel, com e-mail verificado na conta do GitHub dele, e uma segunda
+  conta do GitHub sem convite.
+
+Roteiro, em `https://joao-parana.github.io/graph-builder/`, no Chrome e no Safari:
+1. O topo mostra "Onde salvar" e "Entrar com GitHub"; o console não tem violação de CSP.
+2. Com o convidado: Entrar → GitHub → volta com `@login` e "Na nuvem". Criar um grafo, recarregar a
+   página: continua lá, e a linha aparece em `public.graphs` no painel.
+3. Copiar um grafo de "Neste navegador" para "Na nuvem" e de volta (FR-54).
+4. Sair: volta para "Neste navegador", com os grafos locais intactos.
+5. Com a conta sem convite: aviso "Sua conta do GitHub não tem acesso à nuvem. Peça um convite."
+   e o app segue no modo local.
+6. Na aba Rede, durante os passos 2–5, só há pedidos à origem do app, ao projeto Supabase e ao
+   `github.com` (login) (NFR-05).
+
+O resultado vai para o `HANDOFF.md` antes da tag `v2.0.0`.
 
 ---
 

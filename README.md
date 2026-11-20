@@ -247,6 +247,23 @@ Gera um SPA estático em `ui/build/` (`index.html` + `_app/`), com `index.html` 
 bun run --filter ui preview
 ```
 
+## Segurança: CSP
+
+A **CSP** (*Content Security Policy*) é uma lista de regras que a página entrega ao navegador:
+de onde pode carregar scripts, estilos e imagens e para onde pode fazer pedidos de rede. O que
+estiver fora da lista é bloqueado e aparece como violação no console.
+
+No modo nuvem, a sessão do Supabase fica no `localStorage`: um XSS poderia roubá-la. O Svelte já
+escapa todo texto; a CSP é a segunda barreira. Ela só aceita scripts do próprio app, sem
+`unsafe-inline` nem `eval`, e só deixa a página falar com ela mesma e com o projeto Supabase
+(NFR-05). Assim, um script injetado não roda e, se rodar, não tem para onde mandar o token.
+
+Como o GitHub Pages não permite cabeçalhos, a CSP vai numa `<meta>` no `index.html`, gerada no
+build pelo `kit.csp` do SvelteKit; as regras saem de `ui/src/lib/cloud/csp.ts` (SPEC §9.4). Em
+`<meta>` não vale `frame-ancestors` (proteção contra o app dentro de um *iframe*): risco aceito. A
+CSP limita o estrago de um XSS, mas não substitui o RLS, que separa os grafos de cada usuário no
+banco.
+
 ## Deploy
 
 Não há servidor: o conteúdo de `ui/build/` é publicado como arquivos estáticos.
