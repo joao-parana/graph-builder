@@ -1,5 +1,5 @@
 // Gate da L04 (SPEC §9): criar, ligar, cortar e duplicar peças no canvas.
-import { expect, type Locator, type Page, test } from '@playwright/test';
+import { expect, type Locator, type Page, test } from './csp.ts';
 
 const palette = (page: Page, label: string) =>
   page.locator('.palette').getByRole('button', { name: new RegExp(`^${label}`, 'u') });

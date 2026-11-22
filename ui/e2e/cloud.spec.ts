@@ -1,6 +1,6 @@
 // Gate da L08 (SPEC §9, Q9): conta e modo nuvem (M9, M10) contra o Supabase local, com a sessão
 // injetada. O login real pelo GitHub é conferido só até o pedido ao `/auth/v1/authorize`.
-import { expect, type Page, test } from '@playwright/test';
+import { expect, type Page, test } from './csp.ts';
 import { cloudGraphs, type CloudUser, createUser, injectSession } from './cloud-fixtures.ts';
 import { localCloud } from './local-cloud.ts';
 

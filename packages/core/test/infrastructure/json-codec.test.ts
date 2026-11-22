@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { z } from 'zod';
 import { type Graph, NodeKind } from '../../src/domain/index.ts';
 import { formatPath, jsonGraphCodec } from '../../src/infrastructure/json-codec.ts';
 import { graph, landingPage, node } from '../domain/fixtures.ts';
@@ -205,5 +206,11 @@ describe('jsonGraphCodec.decode — erros com caminho', () => {
     doc['name'] = '';
     at(doc.edges, 0)['kind'] = 'loop';
     expect(issuesOf(JSON.stringify(doc)).map((i) => i.path)).toEqual(['name', 'edges[0].kind']);
+  });
+});
+
+describe('zod sem JIT (SPEC §9.4)', () => {
+  it('não compila validadores com new Function, que a CSP barra', () => {
+    expect(z.config().jitless).toBe(true);
   });
 });

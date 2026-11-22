@@ -247,6 +247,23 @@ Gera um SPA estático em `ui/build/` (`index.html` + `_app/`), com `index.html` 
 bun run --filter ui preview
 ```
 
+## Segurança: CSP
+
+A **CSP** (*Content Security Policy*) é uma lista de regras que a página entrega ao navegador:
+de onde pode carregar scripts, estilos e imagens e para onde pode fazer pedidos de rede. O que
+estiver fora da lista é bloqueado e aparece como violação no console.
+
+No modo nuvem, a sessão do Supabase fica no `localStorage`: um XSS poderia roubá-la. O Svelte já
+escapa todo texto; a CSP é a segunda barreira. Ela só aceita scripts do próprio app, sem
+`unsafe-inline` nem `eval`, e só deixa a página falar com ela mesma e com o projeto Supabase
+(NFR-05). Assim, um script injetado não roda e, se rodar, não tem para onde mandar o token.
+
+Como o GitHub Pages não permite cabeçalhos, a CSP vai numa `<meta>` no `index.html`, gerada no
+build pelo `kit.csp` do SvelteKit; as regras saem de `ui/src/lib/cloud/csp.ts` (SPEC §9.4). Em
+`<meta>` não vale `frame-ancestors` (proteção contra o app dentro de um *iframe*): risco aceito. A
+CSP limita o estrago de um XSS, mas não substitui o RLS, que separa os grafos de cada usuário no
+banco.
+
 ## Deploy
 
 Não há servidor: o conteúdo de `ui/build/` é publicado como arquivos estáticos.
@@ -268,6 +285,45 @@ build assume a raiz `/`, como em dev, preview e e2e. Para conferir localmente o 
 ```bash
 cd ui && BASE_PATH=/graph-builder bun run build && bun run preview
 ```
+
+### Modo nuvem em produção
+
+O Pages publica o modo nuvem quando o repositório tem as duas *variables* do Actions; sem elas, o
+build é só local (v1). Configuração feita uma vez, à mão (SPEC §9.5):
+
+| Onde | O quê |
+| --- | --- |
+| Supabase (projeto `graph-builder`) | migrations aplicadas; **Allow new users to sign up** desligado; Site URL e Redirect URL `https://joao-parana.github.io/graph-builder/`; provedor GitHub ligado |
+| GitHub → OAuth Apps | app de produção com o callback `https://<ref>.supabase.co/auth/v1/callback` (outro app, não o de dev) |
+| Repositório → Settings → Secrets and variables → Actions → **Variables** | `PUBLIC_SUPABASE_URL` (`https://<ref>.supabase.co`) e `PUBLIC_SUPABASE_KEY` (a *publishable key*) |
+
+- O *client secret* do OAuth App fica só no painel do Supabase. As duas *variables* não são
+  segredo (vão no bundle); a *service role key* (`sb_secret_…`) nunca vai para o repositório, e o
+  build a recusa.
+- **Migrations:** rodam da máquina de quem administra, com a CLI ligada ao projeto. Sempre o
+  dry-run antes:
+
+  ```bash
+  bunx supabase link --project-ref <ref> --output-format text
+  ```
+
+  ```bash
+  bunx supabase db push --remote --dry-run --output-format text
+  ```
+
+  ```bash
+  bunx supabase db push --remote --yes --output-format text
+  ```
+
+  O `link` vale para a pasta onde rodou (`supabase/.temp/`, fora do git). Não use
+  `supabase config push`: ele mandaria o `config.toml` local (`127.0.0.1`) para a produção.
+- **Convite:** no painel, **Authentication → Users → Add user**, como no
+  [passo 3](#3-convidar-um-usuário-no-studio) do modo nuvem no desenvolvimento.
+- **Conferir o auth** (com a *publishable key*; espera `disable_signup: true` e `github: true`):
+
+  ```bash
+  curl -s https://<ref>.supabase.co/auth/v1/settings -H "apikey: <publishable key>"
+  ```
 
 ### Outra hospedagem
 
@@ -340,6 +396,9 @@ Registro do que custou investigação, para não repetir:
 | Safari não abre `http://localhost:5173` com o `dev` | o Vite ouvia só em IPv6 (`[::1]`) e o Safari tentou o IPv4 | `dev:cloud` ouve em `127.0.0.1` |
 | Safari troca `http://localhost` por `https://` | HSTS guardado para `localhost` por outro app de dev | usar `127.0.0.1`; para limpar, fechar o Safari e apagar `~/Library/Cookies/HSTS.plist` |
 | Login do GitHub recusado no Supabase local | o auth local manda o callback `http://127.0.0.1:54321/…`, e o OAuth App tinha `localhost` | callback do OAuth App em `127.0.0.1` |
+| `supabase login` falha com `NonInteractiveError` (JSON) | a CLI 3.x vê as variáveis de agente de IA (`CLAUDECODE`, `AI_AGENT`) e muda para saída JSON, sem perguntas | `--output-format text` em cada comando `bunx supabase` |
+| `db push --remote` diz "Confirmation required… agent mode" e não aplica | no modo agente a CLI não pede confirmação | conferir o `--dry-run` e rodar de novo com `--yes` |
+| `db query --remote` diz "Cannot find project ref" | o `supabase link` grava o ref só na pasta onde rodou (`supabase/.temp/`) | rodar na pasta do `link`, ou fazer o `link` de novo nela |
 
 ## Licença
 

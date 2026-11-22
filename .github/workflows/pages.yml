@@ -30,6 +30,10 @@ jobs:
       - run: bun run --filter ui build
         env:
           BASE_PATH: /graph-builder
+          # SPEC §9.2/§9.3 (L09): variables do repositório (não secrets: vão no bundle). Sem as
+          # duas, o build é só local (FR-50); a chave de serviço é recusada no build (NFR-09).
+          PUBLIC_SUPABASE_URL: ${{ vars.PUBLIC_SUPABASE_URL }}
+          PUBLIC_SUPABASE_KEY: ${{ vars.PUBLIC_SUPABASE_KEY }}
       - uses: actions/upload-pages-artifact@v5
         with:
           path: ui/build

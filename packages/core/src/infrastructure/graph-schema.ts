@@ -15,6 +15,10 @@ import {
   SCHEMA_VERSION,
 } from '../domain/index.ts';
 
+// SPEC §9.4: sem compilar validadores com `new Function` (a CSP barra `eval`); sem isso, o teste do
+// zod gera uma violação no console. Tem que vir antes de criar os schemas abaixo.
+z.config({ jitless: true });
+
 export const NAME_PROBLEM_MESSAGE: Readonly<Record<NameProblem, string>> = {
   empty: 'O nome não pode ficar vazio.',
   'too-long': 'O nome passa de 80 caracteres.',

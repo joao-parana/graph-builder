@@ -1,5 +1,5 @@
 // Gate da L05 (SPEC §9): validação ao vivo no inspetor e no painel "Antes de exportar".
-import { expect, type Locator, type Page, test } from '@playwright/test';
+import { expect, type Locator, type Page, test } from './csp.ts';
 
 const palette = (page: Page, label: string) =>
   page.locator('.palette').getByRole('button', { name: new RegExp(`^${label}`, 'u') });
