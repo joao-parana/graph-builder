@@ -286,6 +286,45 @@ build assume a raiz `/`, como em dev, preview e e2e. Para conferir localmente o 
 cd ui && BASE_PATH=/graph-builder bun run build && bun run preview
 ```
 
+### Modo nuvem em produção
+
+O Pages publica o modo nuvem quando o repositório tem as duas *variables* do Actions; sem elas, o
+build é só local (v1). Configuração feita uma vez, à mão (SPEC §9.5):
+
+| Onde | O quê |
+| --- | --- |
+| Supabase (projeto `graph-builder`) | migrations aplicadas; **Allow new users to sign up** desligado; Site URL e Redirect URL `https://joao-parana.github.io/graph-builder/`; provedor GitHub ligado |
+| GitHub → OAuth Apps | app de produção com o callback `https://<ref>.supabase.co/auth/v1/callback` (outro app, não o de dev) |
+| Repositório → Settings → Secrets and variables → Actions → **Variables** | `PUBLIC_SUPABASE_URL` (`https://<ref>.supabase.co`) e `PUBLIC_SUPABASE_KEY` (a *publishable key*) |
+
+- O *client secret* do OAuth App fica só no painel do Supabase. As duas *variables* não são
+  segredo (vão no bundle); a *service role key* (`sb_secret_…`) nunca vai para o repositório, e o
+  build a recusa.
+- **Migrations:** rodam da máquina de quem administra, com a CLI ligada ao projeto. Sempre o
+  dry-run antes:
+
+  ```bash
+  bunx supabase link --project-ref <ref> --output-format text
+  ```
+
+  ```bash
+  bunx supabase db push --remote --dry-run --output-format text
+  ```
+
+  ```bash
+  bunx supabase db push --remote --yes --output-format text
+  ```
+
+  O `link` vale para a pasta onde rodou (`supabase/.temp/`, fora do git). Não use
+  `supabase config push`: ele mandaria o `config.toml` local (`127.0.0.1`) para a produção.
+- **Convite:** no painel, **Authentication → Users → Add user**, como no
+  [passo 3](#3-convidar-um-usuário-no-studio) do modo nuvem no desenvolvimento.
+- **Conferir o auth** (com a *publishable key*; espera `disable_signup: true` e `github: true`):
+
+  ```bash
+  curl -s https://<ref>.supabase.co/auth/v1/settings -H "apikey: <publishable key>"
+  ```
+
 ### Outra hospedagem
 
 - **Rota de fallback:** configure a hospedagem para responder `index.html` a caminhos
@@ -357,6 +396,9 @@ Registro do que custou investigação, para não repetir:
 | Safari não abre `http://localhost:5173` com o `dev` | o Vite ouvia só em IPv6 (`[::1]`) e o Safari tentou o IPv4 | `dev:cloud` ouve em `127.0.0.1` |
 | Safari troca `http://localhost` por `https://` | HSTS guardado para `localhost` por outro app de dev | usar `127.0.0.1`; para limpar, fechar o Safari e apagar `~/Library/Cookies/HSTS.plist` |
 | Login do GitHub recusado no Supabase local | o auth local manda o callback `http://127.0.0.1:54321/…`, e o OAuth App tinha `localhost` | callback do OAuth App em `127.0.0.1` |
+| `supabase login` falha com `NonInteractiveError` (JSON) | a CLI 3.x vê as variáveis de agente de IA (`CLAUDECODE`, `AI_AGENT`) e muda para saída JSON, sem perguntas | `--output-format text` em cada comando `bunx supabase` |
+| `db push --remote` diz "Confirmation required… agent mode" e não aplica | no modo agente a CLI não pede confirmação | conferir o `--dry-run` e rodar de novo com `--yes` |
+| `db query --remote` diz "Cannot find project ref" | o `supabase link` grava o ref só na pasta onde rodou (`supabase/.temp/`) | rodar na pasta do `link`, ou fazer o `link` de novo nela |
 
 ## Licença
 
