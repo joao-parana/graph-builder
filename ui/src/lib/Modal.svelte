@@ -7,12 +7,15 @@
   let {
     title,
     narrow = false,
+    alert = false,
     onclose,
     children,
     footer,
   }: {
     title: string;
     narrow?: boolean;
+    /** FR-51: aviso que pede leitura (`alertdialog`). */
+    alert?: boolean;
     onclose: () => void;
     children: Snippet;
     footer?: Snippet;
@@ -34,6 +37,7 @@
   class="modal"
   class:narrow
   bind:this={dialog}
+  role={alert ? 'alertdialog' : undefined}
   aria-labelledby={titleId}
   oncancel={(event) => {
     event.preventDefault();

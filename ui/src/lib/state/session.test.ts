@@ -127,23 +127,30 @@ describe('Session — início (FR-50, FR-51, Q8)', () => {
     expect(session.signingIn).toBe(false);
   });
 
-  it('sem convite: aviso e modo local; cancelado: sem aviso', async () => {
+  it('sem convite: aviso de login (não toast) e modo local; cancelado: sem aviso', async () => {
     const first = setup();
     first.gateway.returned = err('NOT_INVITED');
     await first.session.start();
     expect(first.session.mode).toBe('local');
     expect(first.session.account).toBeNull();
-    expect(first.messages).toEqual([ptBR.cloud.notInvited]);
+    expect(first.session.notice).toBe(ptBR.cloud.notInvited);
+    expect(first.messages).toEqual([]);
+    vi.advanceTimersByTime(10_000);
+    expect(first.session.notice).toBe(ptBR.cloud.notInvited);
+    first.session.dismissNotice();
+    expect(first.session.notice).toBeNull();
 
     const second = setup();
     second.gateway.returned = err('CANCELLED');
     await second.session.start();
+    expect(second.session.notice).toBeNull();
     expect(second.messages).toEqual([]);
 
     const third = setup();
     third.gateway.returned = err('NETWORK');
     await third.session.start();
-    expect(third.messages).toEqual([ptBR.cloud.signInFailed]);
+    expect(third.session.notice).toBe(ptBR.cloud.signInFailed);
+    expect(third.messages).toEqual([]);
   });
 
   it('abre na nuvem só com sessão válida e modo lembrado', async () => {

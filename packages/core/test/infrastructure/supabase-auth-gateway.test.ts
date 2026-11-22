@@ -38,6 +38,17 @@ describe('parseAuthRedirect (FR-50, FR-51)', () => {
     ).toMatchObject({ error: 'NOT_INVITED', cleanUrl: APP });
   });
 
+  it('sem convite e sem código: a descrição "Signups not allowed" basta (FR-51)', () => {
+    expect(
+      parseAuthRedirect(
+        `${APP}?error=access_denied&error_description=Signups+not+allowed+for+this+instance`,
+      ),
+    ).toEqual({ kind: 'error', error: 'NOT_INVITED', cleanUrl: APP });
+    expect(
+      parseAuthRedirect(`${APP}#error=server_error&error_description=signups%20NOT%20allowed`),
+    ).toMatchObject({ error: 'NOT_INVITED', cleanUrl: APP });
+  });
+
   it('cancelado no GitHub: access_denied sem código de erro', () => {
     expect(parseAuthRedirect(`${APP}?error=access_denied&error_description=x`)).toEqual({
       kind: 'error',
