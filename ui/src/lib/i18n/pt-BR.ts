@@ -244,6 +244,9 @@ export const ptBR = {
     copyTo: { local: 'Copiar para este navegador', cloud: 'Copiar para a nuvem' },
     copied: { local: 'Copiado para este navegador', cloud: 'Copiado para a nuvem' },
     moreActions: 'Mais ações',
+    /** FR-51: modal do aviso de login. */
+    noticeTitle: 'Entrar com GitHub',
+    noticeOk: 'Entendi',
     notInvited: 'Sua conta do GitHub não tem acesso à nuvem. Peça um convite.',
     signInFailed: 'Não foi possível entrar agora. Tente de novo.',
     saveFailed: (reason: string) => `Não foi possível salvar na nuvem: ${reason}`,
