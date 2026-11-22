@@ -1,17 +1,27 @@
 <script lang="ts">
-  // Barra do topo (M1): título editável (FR-33), "salvo" (FR-30) e os botões dos modais.
+  // Barra do topo (M1, M9): título editável (FR-33), "salvo" (FR-30), os botões dos modais e, com a
+  // nuvem no build, "Onde salvar" e a conta (FR-50..53).
+  import AccountButton from '#lib/account/AccountButton.svelte';
+  import ModeSwitch from '#lib/account/ModeSwitch.svelte';
   import { ptBR } from '#lib/i18n/pt-BR.ts';
   import Field from '#lib/inspector/Field.svelte';
   import type { ModalName } from '#lib/modals/modal-name.ts';
   import { fieldError } from '#lib/inspector/field-error.ts';
   import type { Editor } from '#lib/state/editor.svelte.ts';
+  import type { Session } from '#lib/state/session.svelte.ts';
   import type { SaveStatus } from '#lib/state/workspace.svelte.ts';
 
   let {
     editor,
     status,
+    session,
     onopen,
-  }: { editor: Editor; status: SaveStatus; onopen: (modal: ModalName) => void } = $props();
+  }: {
+    editor: Editor;
+    status: SaveStatus;
+    session: Session;
+    onopen: (modal: ModalName) => void;
+  } = $props();
 
   const t = ptBR.top;
   const statusText = $derived(
@@ -36,6 +46,9 @@
       >{statusText}</span
     >
   </div>
+  {#if session.cloudAvailable}
+    <ModeSwitch {session} />
+  {/if}
   <nav class="actions" aria-label="Arquivo">
     <button
       type="button"
@@ -76,6 +89,9 @@
       }}>{t.export}</button
     >
   </nav>
+  {#if session.cloudAvailable}
+    <AccountButton {session} />
+  {/if}
 </header>
 
 <style>
@@ -111,10 +127,12 @@
   .title :global(.field) {
     margin: 0;
     position: relative;
+    /* Com o seletor de modo e a conta (M9), o título encolhe antes do "salvo". */
+    flex: 0 1 240px;
+    min-width: 0;
   }
   .title :global(input) {
-    width: 320px;
-    max-width: 40vw;
+    width: 100%;
     border-color: transparent;
     background: transparent;
     text-align: center;
@@ -134,6 +152,7 @@
     z-index: 30;
   }
   .status {
+    flex: none;
     font: 11px var(--mono);
     color: var(--kind-delivery);
     white-space: nowrap;

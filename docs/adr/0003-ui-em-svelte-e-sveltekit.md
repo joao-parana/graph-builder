@@ -106,4 +106,5 @@ O `@xyflow/svelte` 2.0.x saiu em 2026-11-16/17 e depende do `@xyflow/system` 1.0
 data. O `minimumReleaseAge` de 3 dias (ADR-0002) só os liberaria em 2026-11-20. Para não atrasar a
 L04 nem passar pela linha 1.x, o `bunfig.toml` ganhou
 `minimumReleaseAgeExcludes = ["@xyflow/svelte", "@xyflow/system"]`. Instalado: `@xyflow/svelte`
-2.0.2. **Remover a exceção a partir de 2026-11-20**, quando a versão instalada já cumpre a idade.
+2.0.2. **Exceção removida em 2026-11-21:** o `@xyflow/svelte` 2.0.2 e o `@xyflow/system` 1.0.0 já
+cumprem a idade mínima, e o `bunfig.toml` voltou a valer para todos os pacotes.

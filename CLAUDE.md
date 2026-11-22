@@ -29,7 +29,10 @@ Estado da sessão anterior: `HANDOFF.md` (efêmero, sobrescrito a cada sessão).
 ## Arquitetura (resumo)
 - `packages/core/src/domain` — puro. Sem imports de `application`, `infrastructure`, Svelte ou DOM.
 - `packages/core/src/application` — casos de uso + portas. Depende só de `domain`.
-- `packages/core/src/infrastructure` — zod, IndexedDB, dagre, PromptRenderer. Implementa portas.
+- `packages/core/src/infrastructure` — zod, IndexedDB, dagre, PromptRenderer e, na v2, Supabase
+  (`supabase-js` só aqui; ADR-0004). Implementa portas.
+- `supabase/` — config do Supabase local e `migrations/` (esquema e RLS). Testes da nuvem rodam só
+  contra o Supabase local (`bun run db:start`, Docker), nunca contra produção.
 - `ui/` — SvelteKit 3 (SPA estático, `ssr = false`) + Svelte 5 (runes) + `@xyflow/svelte` (ADR-0003).
   Chama casos de uso; nunca muta `Graph` diretamente. Sem stores legados (`writable`) nem Zustand.
 - TypeScript 6.x: o SvelteKit 3, o `svelte-check` e o `typescript-eslint` não aceitam o 7 (ADR-0003).

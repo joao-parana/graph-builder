@@ -11,6 +11,7 @@
     type ValidationIssue,
   } from '@graph-builder/core';
   import Canvas from '#lib/canvas/Canvas.svelte';
+  import { cloudConfig } from '#lib/cloud/config.ts';
   import Inspector from '#lib/inspector/Inspector.svelte';
   import ClearModal from '#lib/modals/ClearModal.svelte';
   import ExportModal from '#lib/modals/ExportModal.svelte';
@@ -21,6 +22,7 @@
   import { kindFrom } from '#lib/palette/drag.ts';
   import Palette from '#lib/palette/Palette.svelte';
   import { Editor } from '#lib/state/editor.svelte.ts';
+  import { Session } from '#lib/state/session.svelte.ts';
   import { shortcutFor } from '#lib/state/shortcuts.ts';
   import { Workspace } from '#lib/state/workspace.svelte.ts';
   import Toast from '#lib/Toast.svelte';
@@ -36,14 +38,29 @@
   const HALF = { x: 95, y: 36 };
 
   const editor = new Editor();
-  const workspace = new Workspace(editor, new IndexedDbGraphRepository());
+  const local = new IndexedDbGraphRepository();
+  const workspace = new Workspace(editor, local);
+
+  /** ADR-0004, item 9: sem as variáveis do Supabase no build, só o modo local. */
+  const config = cloudConfig;
+  const session = new Session({
+    workspace,
+    local,
+    cloud:
+      config === null
+        ? null
+        : () => import('#lib/cloud/services.ts').then((m) => m.cloudServices(config)),
+    notify: (message: string) => {
+      editor.notify(message);
+    },
+  });
   const flow = useSvelteFlow();
   /** O canvas só monta com o grafo salvo já aberto (FR-30). */
   let ready = $state(false);
   let modal: ModalName | null = $state(null);
 
   onMount(() => {
-    workspace.start().then(
+    session.start().then(
       () => (ready = true),
       () => {
         ready = true;
@@ -53,9 +70,16 @@
     const hide = () => {
       if (document.visibilityState === 'hidden') void workspace.flush();
     };
+    /** FR-55: a gravação que falhou sem conexão é tentada de novo quando ela volta. */
+    const online = () => {
+      if (workspace.status === 'error') workspace.schedule();
+    };
     document.addEventListener('visibilitychange', hide);
+    window.addEventListener('online', online);
     return () => {
       document.removeEventListener('visibilitychange', hide);
+      window.removeEventListener('online', online);
+      session.stop();
     };
   });
 
@@ -156,7 +180,12 @@
 <svelte:window onkeydown={keydown} />
 
 <div class="editor" class:focus={editor.focus}>
-  <TopBar {editor} status={workspace.status} onopen={(name: ModalName) => (modal = name)} />
+  <TopBar
+    {editor}
+    {session}
+    status={workspace.status}
+    onopen={(name: ModalName) => (modal = name)}
+  />
   <div class="body">
     {#if !editor.focus && ready}
       <Palette onadd={addAtCenter} />
@@ -186,7 +215,7 @@
   {:else if modal === 'import'}
     <ImportModal ctx={editor.ctx} onclose={closeModal} onimport={(g: Graph) => void imported(g)} />
   {:else if modal === 'library'}
-    <LibraryModal {workspace} onclose={closeModal} />
+    <LibraryModal {workspace} {session} onclose={closeModal} />
   {:else if modal === 'clear'}
     <ClearModal
       onclose={closeModal}
@@ -196,7 +225,7 @@
       }}
     />
   {:else if modal === 'help'}
-    <HelpModal onclose={closeModal} />
+    <HelpModal cloud={session.cloudAvailable} onclose={closeModal} />
   {/if}
   <Toast toast={editor.toast} ondismiss={() => (editor.toast = null)} />
 </div>

@@ -1,45 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  type Graph,
-  type GraphId,
-  type GraphRepository,
-  type GraphSummary,
-  graphId,
-  NodeKind,
-} from '@graph-builder/core';
+import { type GraphId, graphId, NodeKind } from '@graph-builder/core';
 import { Editor } from './editor.svelte.ts';
+import { MemoryRepo } from './test-repo.ts';
 import { testContext } from './test-context.ts';
 import { SAVE_DEBOUNCE_MS, Workspace } from './workspace.svelte.ts';
-
-class MemoryRepo implements GraphRepository {
-  readonly graphs = new Map<GraphId, Graph>();
-  saves = 0;
-  fail = false;
-
-  list(): Promise<readonly GraphSummary[]> {
-    return Promise.resolve(
-      [...this.graphs.values()].map((g) => ({
-        id: g.id,
-        name: g.name,
-        nodeCount: g.nodes.length,
-        updatedAt: g.updatedAt,
-      })),
-    );
-  }
-  get(id: GraphId): Promise<Graph | null> {
-    return Promise.resolve(this.graphs.get(id) ?? null);
-  }
-  save(graph: Graph): Promise<void> {
-    if (this.fail) return Promise.reject(new Error('quota'));
-    this.saves += 1;
-    this.graphs.set(graph.id, graph);
-    return Promise.resolve();
-  }
-  delete(id: GraphId): Promise<void> {
-    this.graphs.delete(id);
-    return Promise.resolve();
-  }
-}
 
 function setup(repo = new MemoryRepo()) {
   const editor = new Editor(testContext());
@@ -194,5 +158,52 @@ describe('Workspace — Meus grafos (FR-22, FR-31)', () => {
     await workspace.remove(first);
     expect(repo.graphs.size).toBe(1);
     expect(editor.graph.id).not.toBe(first);
+  });
+});
+
+describe('Workspace — modos (FR-53, FR-54, FR-56)', () => {
+  it('use grava o pendente no repositório antigo e abre o mais recente do novo', async () => {
+    const { repo, editor, workspace } = setup();
+    await workspace.start();
+    const localId = editor.graph.id;
+    editor.addNode(NodeKind.Worker, { x: 0, y: 0 });
+    workspace.schedule();
+    const cloud = new MemoryRepo();
+    await workspace.use(cloud);
+    expect(stored(repo, localId)?.nodes).toHaveLength(1);
+    expect(cloud.graphs.size).toBe(1);
+    expect(editor.graph.id).not.toBe(localId);
+    expect(workspace.graphs.map((g) => g.id)).toEqual([editor.graph.id]);
+    expect(workspace.status).toBe('saved');
+  });
+
+  it('a falha usa o texto do repositório atual', async () => {
+    const { editor, workspace } = setup();
+    const notify = vi.spyOn(editor, 'notify');
+    const cloud = new MemoryRepo();
+    await workspace.use(cloud, () => 'falhou na nuvem');
+    cloud.fail = true;
+    editor.addNode(NodeKind.Worker, { x: 0, y: 0 });
+    workspace.schedule();
+    await workspace.flush();
+    expect(workspace.status).toBe('error');
+    expect(notify).toHaveBeenCalledWith('falhou na nuvem');
+  });
+
+  it('copyTo grava antes e copia com id novo; keepIn guarda o aberto com o mesmo id', async () => {
+    const { editor, workspace } = setup();
+    await workspace.start();
+    const id = editor.graph.id;
+    editor.addNode(NodeKind.Worker, { x: 0, y: 0 });
+    workspace.schedule();
+    const other = new MemoryRepo();
+    const copy = await workspace.copyTo(id, other);
+    expect(copy?.id).not.toBe(id);
+    expect(copy && stored(other, copy.id)?.nodes).toHaveLength(1);
+    expect(await workspace.copyTo(graphId('nada'), other)).toBeNull();
+
+    const rescue = new MemoryRepo();
+    await workspace.keepIn(rescue);
+    expect(stored(rescue, id)?.nodes).toHaveLength(1);
   });
 });
