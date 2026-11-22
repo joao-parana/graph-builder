@@ -1,12 +1,10 @@
 # HANDOFF — 2026-11-22 (sessão 10: L09 cloud-release → v2.0.0)
 
 ## Estado
-- **L09 pronta para a tag `v2.0.0`**, faltando só reconferir o item 6 do gate manual com o aviso
-  modal (abaixo). Os três `package.json` estão em `2.0.0`.
-- **`master`** recebeu a v2.0.0 (`304987f`) e está publicada em
-  https://joao-parana.github.io/graph-builder/ com o modo nuvem ligado. A correção
-  `fix/l09-aviso-sem-convite` vai junto na próxima publicação.
-- **Roadmap:** v1 (L00–L06) e v2 (L07–L09) concluídas após a tag.
+- **L09 concluída: tag `v2.0.0`** em `37d1f77` (merge da `develop` na `master`, com a correção
+  `fix/l09-aviso-sem-convite`), publicada em https://joao-parana.github.io/graph-builder/ com o
+  modo nuvem ligado. Os três `package.json` estão em `2.0.0`.
+- **Roadmap:** v1 (L00–L06) e v2 (L07–L09) concluídas. Não há camada nova definida no SPEC §9.
 - **Produção:** projeto Supabase `graph-builder` (ref `oobsowknnhkwverrwgan`, us-east-2), migration
   `20261119124437_graphs.sql` aplicada, RLS ligada (`graphs_owner`), cadastro fechado
   (`disable_signup: true`), GitHub ligado com o OAuth App de produção. *Variables* do repositório:
@@ -37,17 +35,17 @@
   pelo usuário; a descrição "Signups not allowed" sem o código também conta como sem convite.
   Achado no e2e: o atalho de Esc do editor fazia `preventDefault` com o aviso aberto e o impedia de
   fechar; os atalhos agora param com o aviso aberto.
-- **Falta:** depois do deploy da correção, repetir o item 6 e ver o aviso ficar até "Entendi".
+- Item 6 repetido depois do deploy da correção: o aviso ficou na tela até "Entendi". Gate
+  manual da L09 aprovado.
 
 ## Pendências
-- Tag `v2.0.0` depois de reconferir o item 6.
 - O e2e da nuvem roda só com o Supabase local no ar; sem ele, é pulado com aviso.
 - Cobertura de branches da UI: 88,23% (componentes `.svelte` cobertos pelo e2e).
 - Copiar (clipboard) não tem e2e: precisa de permissão diferente em cada navegador.
 - Nunca usar `supabase config push` (levaria a config local, com `127.0.0.1`, para a produção).
 
 ## Próximo passo
-- Commit da correção, merge na `develop` e na `master` (deploy), item 6 de novo, tag `v2.0.0`.
+- Nenhum pendente da v2. Próximas mudanças começam por uma proposta no SPEC (SDD).
 
 ## Gates
 Comando: `bun run db:start` e depois `{ bun run --filter '*' typecheck && bun run --filter '*' lint && bun run --filter '*' test --coverage && bun run --filter ui e2e ; }`
