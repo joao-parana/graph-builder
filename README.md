@@ -341,7 +341,7 @@ Registro do que custou investigação, para não repetir:
 
 | Problema | Causa | Solução |
 | --- | --- | --- |
-| `bun add @xyflow/svelte` recusado | `minimumReleaseAge` de 3 dias e versão recém-publicada | exceção temporária em `minimumReleaseAgeExcludes` (ADR-0003); remover a partir de 2026-11-20 |
+| `bun add @xyflow/svelte` recusado | `minimumReleaseAge` de 3 dias e versão recém-publicada | exceção temporária em `minimumReleaseAgeExcludes` (ADR-0003), removida em 2026-11-21, quando a versão já tinha a idade |
 | SvelteKit 3 não compila com TypeScript 7 | SvelteKit 3, `svelte-check` e `typescript-eslint` exigem TS 6 | fixar TS 6.x; sem `ignoreDeprecations` (ADR-0003) |
 | `$lib/...` não resolve | o SvelteKit 3 removeu o alias | imports por `#lib/...` (subpath imports) |
 | Erros do compilador Svelte em classes | parameter properties de TS não são aceitas; `$derived` em campo não lê o que o construtor grava | atribuir campos no construtor; getters no lugar de `$derived` em classe |
