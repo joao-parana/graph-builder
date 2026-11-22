@@ -51,14 +51,35 @@ test.describe('sem sessão', () => {
     expect(url.searchParams.get('code_challenge_method')).toBe('s256');
   });
 
-  test('volta sem convite: aviso, modo local e URL limpa (FR-51)', async ({ page, baseURL }) => {
+  test('volta sem convite: aviso que fica até "Entendi", modo local e URL limpa (FR-51)', async ({
+    page,
+    baseURL,
+  }) => {
     await page.goto('/?error=access_denied&error_code=signup_disabled&error_description=Signups');
-    await ready(page);
-    await expect(toast(page)).toHaveText(
+    const notice = page.getByRole('alertdialog', { name: 'Entrar com GitHub' });
+    await expect(notice).toContainText(
       'Sua conta do GitHub não tem acesso à nuvem. Peça um convite.',
     );
     await expect(page).toHaveURL(`${baseURL ?? ''}/`);
+    // Mais que os 3 s do toast: o aviso continua na tela.
+    await page.waitForTimeout(3500);
+    await expect(notice).toBeVisible();
+    await notice.getByRole('button', { name: 'Entendi' }).click();
+    await expect(notice).toBeHidden();
+    await ready(page);
     await expect(mode(page, 'Neste navegador')).toBeChecked();
+  });
+
+  test('volta sem convite só com a descrição: o aviso fecha com Esc (FR-51)', async ({ page }) => {
+    await page.goto(
+      '/#error=access_denied&error_description=Signups+not+allowed+for+this+instance',
+    );
+    const notice = page.getByRole('alertdialog', { name: 'Entrar com GitHub' });
+    await expect(notice).toContainText('não tem acesso à nuvem');
+    await ready(page);
+    await page.keyboard.press('Escape');
+    await expect(notice).toBeHidden();
+    await expect(toast(page)).toHaveCount(0);
   });
 });
 

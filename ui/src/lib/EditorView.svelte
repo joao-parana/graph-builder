@@ -18,6 +18,7 @@
   import HelpModal from '#lib/modals/HelpModal.svelte';
   import ImportModal from '#lib/modals/ImportModal.svelte';
   import LibraryModal from '#lib/modals/LibraryModal.svelte';
+  import NoticeModal from '#lib/modals/NoticeModal.svelte';
   import { ptBR } from '#lib/i18n/pt-BR.ts';
   import { kindFrom } from '#lib/palette/drag.ts';
   import Palette from '#lib/palette/Palette.svelte';
@@ -153,7 +154,7 @@
   }
 
   function keydown(event: KeyboardEvent) {
-    if (modal !== null) return; // atalhos não agem com modal aberto
+    if (modal !== null || session.notice !== null) return; // atalhos não agem com modal aberto
     const action = shortcutFor(event);
     if (action === null) return;
     event.preventDefault();
@@ -226,6 +227,14 @@
     />
   {:else if modal === 'help'}
     <HelpModal cloud={session.cloudAvailable} onclose={closeModal} />
+  {/if}
+  {#if session.notice !== null}
+    <NoticeModal
+      message={session.notice}
+      onclose={() => {
+        session.dismissNotice();
+      }}
+    />
   {/if}
   <Toast toast={editor.toast} ondismiss={() => (editor.toast = null)} />
 </div>

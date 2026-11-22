@@ -13,6 +13,9 @@ export type AuthRedirect =
 /** Parâmetros que o Supabase Auth põe na volta e o app tira da URL. */
 const AUTH_PARAMS = ['code', 'error', 'error_code', 'error_description', 'sb', 'state'];
 
+/** FR-51: descrição do Supabase Auth quando o cadastro está fechado e a volta vem sem o código. */
+const SIGNUPS_NOT_ALLOWED = /signups not allowed/i;
+
 /** Tira os parâmetros de auth; devolve o resto, já com `?`/`#`, ou vazio. */
 function stripAuthParams(params: URLSearchParams, prefix: '?' | '#'): string {
   for (const name of AUTH_PARAMS) params.delete(name);
@@ -22,7 +25,8 @@ function stripAuthParams(params: URLSearchParams, prefix: '?' | '#'): string {
 
 /**
  * Lê a volta do login (FR-50, FR-51): `?code=` (PKCE) ou erro, que o Supabase pode mandar na query
- * ou no fragmento. Sem convite: `error_code=signup_disabled` (Q7). Cancelado: `access_denied`.
+ * ou no fragmento. Sem convite: `error_code=signup_disabled` (Q7) ou, sem o código, a descrição
+ * "Signups not allowed". Cancelado: `access_denied` sem nenhum dos dois.
  */
 export function parseAuthRedirect(href: string): AuthRedirect {
   const url = new URL(href);
@@ -42,7 +46,10 @@ export function parseAuthRedirect(href: string): AuthRedirect {
 
   if (error === null && code !== null) return { kind: 'code', code, cleanUrl };
   const errorCode = read('error_code');
-  if (errorCode === 'signup_disabled') return { kind: 'error', error: 'NOT_INVITED', cleanUrl };
+  const description = read('error_description') ?? '';
+  if (errorCode === 'signup_disabled' || SIGNUPS_NOT_ALLOWED.test(description)) {
+    return { kind: 'error', error: 'NOT_INVITED', cleanUrl };
+  }
   if (error === 'access_denied' && errorCode === null) {
     return { kind: 'error', error: 'CANCELLED', cleanUrl };
   }

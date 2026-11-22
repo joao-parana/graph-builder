@@ -341,13 +341,19 @@ aparece.
   - A URL perde os parâmetros do retorno (`?code=…`) sem recarregar a página.
   - O grafo local que estava aberto é gravado antes de sair para o GitHub.
   - Enquanto o app troca o `?code=` pela sessão, o botão mostra "Entrando…" e fica desabilitado.
-  - Falha na troca (rede, servidor): fica no modo local, toast "Não foi possível entrar agora. Tente
-    de novo.".
+  - Falha na troca (rede, servidor): fica no modo local e mostra o aviso de login (FR-51) com
+    "Não foi possível entrar agora. Tente de novo.".
 - **FR-51 Acesso negado:** conta do GitHub sem convite (ou login cancelado).
-  - Sem convite, o Supabase volta com `error_code=signup_disabled` (Q7); cancelado no GitHub, com
-    `error=access_denied` sem esse código. Os parâmetros podem vir na query ou no fragmento (`#`).
+  - Sem convite, o Supabase volta com `error_code=signup_disabled` (Q7) ou, sem esse código, com
+    `error_description` que contém "Signups not allowed" (sem diferenciar maiúsculas); cancelado no
+    GitHub, com `error=access_denied` sem nenhum dos dois. Os parâmetros podem vir na query ou no
+    fragmento (`#`).
   - O app fica no modo local, sem sessão, e mostra: "Sua conta do GitHub não tem acesso à nuvem.
     Peça um convite." (cancelado: nenhuma mensagem). Nenhum dado local muda.
+  - **Aviso de login:** a mensagem da volta do login (sem convite, ou a falha da FR-50) abre num
+    modal de alerta (`role="alertdialog"`, título "Entrar com GitHub", botão "Entendi"). Ele não
+    some sozinho: fica até o usuário clicar em "Entendi", no ✕ ou apertar Esc. O usuário pode
+    perder um toast enquanto o app carrega; o modal garante que ele leia.
 - **FR-52 Sair:** menu do usuário no topo (avatar + `@login`) → "Sair" (M9).
   - Grava o que estiver pendente na nuvem, encerra a sessão, volta ao modo local e abre o grafo
     local mais recente (FR-30).
@@ -387,7 +393,8 @@ Textos da v2 (NFR-06: em `ui/src/lib/i18n/pt-BR.ts`, na chave `cloud`):
 | Menu do usuário (FR-52) | "@{login}" (rótulo acessível "Conta @{login}"); item "Sair" |
 | Título de "Meus grafos" (FR-53) | "Meus grafos — neste navegador" / "Meus grafos — na nuvem" |
 | Ação por linha (FR-54) | "Copiar para a nuvem" / "Copiar para este navegador"; menu "⋯" com rótulo "Mais ações" |
-| Toasts | "Copiado para a nuvem"; "Copiado para este navegador"; "Sua conta do GitHub não tem acesso à nuvem. Peça um convite."; "Não foi possível entrar agora. Tente de novo."; "Não foi possível salvar na nuvem: {motivo}"; "Sem conexão: as mudanças serão salvas quando a conexão voltar."; "Sua sessão expirou. Entre de novo."; "O grafo não salvo na nuvem foi guardado neste navegador." |
+| Aviso de login (FR-51) | título "Entrar com GitHub"; botão "Entendi"; mensagens "Sua conta do GitHub não tem acesso à nuvem. Peça um convite." e "Não foi possível entrar agora. Tente de novo." |
+| Toasts | "Copiado para a nuvem"; "Copiado para este navegador"; "Não foi possível entrar agora. Tente de novo." (ao sair para o GitHub); "Não foi possível salvar na nuvem: {motivo}"; "Sem conexão: as mudanças serão salvas quando a conexão voltar."; "Sua sessão expirou. Entre de novo."; "O grafo não salvo na nuvem foi guardado neste navegador." |
 | Ajuda (FR-40) | seção "Conta e nuvem": "Sem conta, os grafos ficam só neste navegador. Com o GitHub, convidados guardam grafos na nuvem e os abrem em outro computador. Em Meus grafos, copie um grafo de um lugar para o outro." |
 
 ---

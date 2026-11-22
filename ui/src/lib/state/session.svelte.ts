@@ -54,6 +54,8 @@ export class Session {
   signingIn = $state(false);
   /** O build tem a nuvem e os adaptadores carregaram (ou ainda vão carregar). */
   cloudAvailable = $state(false);
+  /** FR-51: aviso da volta do login; fica no modal até o usuário fechar (`dismissNotice`). */
+  notice: string | null = $state(null);
 
   constructor(deps: SessionDeps) {
     this.workspace = deps.workspace;
@@ -93,8 +95,8 @@ export class Session {
       mode = 'cloud';
       writeMode(this.store, mode);
     } else {
-      if (returned.error === 'NOT_INVITED') this.notify(ptBR.cloud.notInvited);
-      if (returned.error === 'NETWORK') this.notify(ptBR.cloud.signInFailed);
+      if (returned.error === 'NOT_INVITED') this.notice = ptBR.cloud.notInvited;
+      if (returned.error === 'NETWORK') this.notice = ptBR.cloud.signInFailed;
       mode = 'local';
     }
     if (mode === 'cloud') await this.enter('cloud');
@@ -102,6 +104,10 @@ export class Session {
     this.unsubscribe = cloud.gateway.onChange((account) => {
       this.changed(account);
     });
+  }
+
+  dismissNotice(): void {
+    this.notice = null;
   }
 
   stop(): void {
