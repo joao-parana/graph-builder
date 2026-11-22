@@ -4,6 +4,3 @@
 linker = "isolated"
 # Segundos (3 dias). Bloqueia versões recém-publicadas.
 minimumReleaseAge = 259200
-# Exceção (ADR-0003, L04): o @xyflow/svelte 2.0.x e o @xyflow/system 1.0.0 saíram em 2026-11-16/17.
-# Remover a partir de 2026-11-21, quando a versão instalada já passa da idade mínima.
-minimumReleaseAgeExcludes = ["@xyflow/svelte", "@xyflow/system"]
