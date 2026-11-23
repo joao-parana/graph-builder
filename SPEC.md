@@ -829,6 +829,21 @@ O resultado vai para o `HANDOFF.md` antes da tag `v2.0.0`.
 - Sub-grafo: Entrega de um grafo alimentando outro ("fase seguinte").
 - Depois da v2 (ADR-0004): compartilhar grafos entre usuários, sincronização automática entre os
   modos, papéis (admin/usuário).
+- **Parâmetros do grafo.** *Hoje, sem mudar o app (convenção):* um valor que muda a cada execução
+  vira um marcador `{{nome}}` (chaves duplas, `nome` em `[a-z][a-z0-9_]*`) no Objetivo, nas
+  Instruções ou na barra, com os padrões numa linha do Objetivo (`Parâmetros: max_palavras (padrão:
+  120).`). O renderer copia o texto como está (§6, regra 1), e quem executa troca os marcadores
+  pelos valores antes de montar o pacote do crítico, para a barra chegar resolvida ao Supervisor
+  sem quebrar a cegueira. Chave simples (`{público}`) segue como texto literal. *Evolução:*
+  `Graph.parameters` (`name`, `description`, `defaultValue`); INV-10 (nome válido e único,
+  case-insensitive); VAL-11 (erro: marcador sem declaração) e VAL-12 (alerta: parâmetro sem uso);
+  seção `## Parâmetros` no prompt, depois de `## Objetivo`, só quando houver (o renderer não
+  resolve valores: o prompt segue função só do grafo, §6 regra 1); `schemaVersion: 2`, com migração
+  v1→v2 (`parameters: []`) no codec e na leitura do IndexedDB (a nuvem passa pelo codec; `data`
+  é `jsonb`, sem migration SQL). Pede camada própria, com ADR (sintaxe do marcador e primeira
+  migração de schema). Análise das alternativas e do impacto por arquivo:
+  `graph-examples/anotacoes/parametros-do-grafo.md` (laboratório dos tutoriais, repositório
+  próprio, fora deste).
 
 ---
 
