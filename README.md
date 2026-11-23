@@ -374,6 +374,17 @@ Aprovado → Decisão 1
 Atalhos: `Del` apaga · `⌘D` duplica · `⌘Z` / `⇧⌘Z` desfaz e refaz · clique num fio para
 selecioná-lo e clique de novo (ou `Del`) para cortar · botão **?** abre a ajuda.
 
+### Enviar um grafo a um colega
+
+Um jeito simples para clonar e editar um grafo para exportar e enviar a um colega:
+
+1. Em **Meus grafos**, use **Duplicar** (o app gera o `id` novo e o nome "… (cópia)").
+2. Renomeie a cópia.
+3. Exporte em **Exportar para a IA** → aba **JSON** e mande esse arquivo para o colega.
+
+O colega importa com **Abrir JSON**. A importação sempre salva um grafo novo, com `id` próprio, e
+nunca sobrescreve um grafo dele.
+
 ## Problemas resolvidos
 
 Registro do que custou investigação, para não repetir:
