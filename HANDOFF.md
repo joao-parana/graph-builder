@@ -2,7 +2,8 @@
 
 ## Estado
 - **v2.2.0** (tag anotada em `8852a43`, enviada ao `origin`) com o tutorial 02 (Triagem com
-  Decisão) em `docs/tutorial/`. `master` em `8852a43` e `develop` em `d654504`, iguais ao `origin`.
+  Decisão) em `docs/tutorial/`. `master` em `8852a43`; `develop` em `17f5084` (merge do
+  `4b5b396`, o HANDOFF da v2.2.0), iguais ao `origin`.
   Só documentação e um teste: o app é o mesmo da v2.0.0. Os três `package.json` e o `bun.lock`
   estão em `2.2.0`. A tag não corresponde a uma camada do SPEC §9. Conferir o "Deploy no GitHub
   Pages" da `master`.
@@ -17,9 +18,14 @@
 - Antes disso, **`develop`**, **`master`** e `v2.1.0` estavam em `404aecb`, iguais ao `origin`. O merge da versão
   (`984e4b8`) foi feito com a `master` aberta (a mensagem do `404aecb` diz "into develop"); a
   `develop` foi alinhada por fast-forward. Histórico mantido (já enviado e com tag).
-- Worktree de publicação `.claude/worktrees/graph-examples` (`feature/graph-examples`, em
-  `fbcb4da`): manter para os próximos tutoriais; antes de usar, `merge --ff-only develop` nele.
-  Commitar sempre com a `feature/graph-examples` aberta nele (nunca a `master`).
+- Worktree de publicação `.claude/worktrees/graph-examples`: manter para os próximos tutoriais.
+  **Hoje ele está com a `master` aberta** (em `8852a43`); a `feature/graph-examples` está em
+  `4b5b396`, sem worktree. Antes de usar: `switch feature/graph-examples` e
+  `merge --ff-only develop` nele. Commitar sempre com a `feature/graph-examples` aberta (nunca a
+  `master`).
+- Worktree solto `.claude/worktrees/tutorial-02-publish-eea5b5` (branch
+  `claude/tutorial-02-publish-eea5b5`, em `82efed6`, sem mudanças): sobra da sessão que publicou
+  o 02. Pode ser removido com a branch.
 - **Produção:** projeto Supabase `graph-builder` (ref `oobsowknnhkwverrwgan`, us-east-2), migration
   `20261119124437_graphs.sql` aplicada, RLS ligada (`graphs_owner`), cadastro fechado
   (`disable_signup: true`), GitHub ligado com o OAuth App de produção. *Variables* do repositório:
@@ -118,8 +124,6 @@ A partir do laboratório `graph-examples` na `master` em `10ea136` (estado em
 - Cobertura de branches da UI: 88,23% (componentes `.svelte` cobertos pelo e2e).
 - Copiar (clipboard) não tem e2e: precisa de permissão diferente em cada navegador.
 - Nunca usar `supabase config push` (levaria a config local, com `127.0.0.1`, para a produção).
-- A branch `claude/graph-parameters-example-91291a` (do worktree desta sessão) ficou sem uso: pode
-  ser apagada com o worktree.
 - O estado `?` da skill ainda não apareceu numa execução real: no grafo 01 as linhas do crítico se
   conferem só pelo resumo. Primeiro candidato: tutorial 03 (fontes).
 
@@ -134,11 +138,21 @@ A partir do laboratório `graph-examples` na `master` em `10ea136` (estado em
   Plano toca mais de 3 arquivos: listar e esperar o OK.
 
 ## Gates
-Publicação do tutorial 02 (v2.2.0): colar aqui a saída de `/tmp/gates.txt`. Só o
-`tutorial-examples.test.ts` foi conferido na sessão (8 passed).
+Publicação do tutorial 02 (v2.2.0), `/tmp/gates.txt` de 2026-11-24 18:02 (Supabase local no ar):
+```
+@graph-builder/core typecheck: Exited with code 0
+ui typecheck: svelte-check found 0 errors and 0 warnings
+@graph-builder/core lint: Exited with code 0
+ui lint: Exited with code 0
+@graph-builder/core test:  ✓ test/docs/tutorial-examples.test.ts (8 tests)
+@graph-builder/core test:       Tests  293 passed (293)
+@graph-builder/core test: Branches     : 97.89%
+ui test:       Tests  135 passed (135)
+ui test: Branches     : 88.23%
+ui e2e:   78 passed (37.0s)
+```
 
-Rodados em 2026-11-24 no worktree `feature/graph-examples` (publicação do tutorial 01, Supabase
-local no ar):
+Publicação do tutorial 01 (v2.1.0), no worktree `feature/graph-examples`, Supabase local no ar:
 ```
 @graph-builder/core typecheck: Exited with code 0
 ui typecheck: svelte-check found 0 errors and 0 warnings
