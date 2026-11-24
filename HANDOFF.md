@@ -48,7 +48,7 @@ Confirmado no código durante a sessão:
 - "Apagar" existe nos dois modos de "Meus grafos" (FR-31). Com sessão, fica no menu "⋯ Mais ações"
   de cada linha (FR-54). Decisão do usuário: manter assim.
 
-## Laboratório dos tutoriais (`graph-examples/`, repositório próprio, `main`)
+## Laboratório dos tutoriais (`graph-examples/`, repositório próprio, `master`)
 Ignorado por este repositório. Feito nesta sessão (commits manuais do usuário):
 - Grafo 01 ("Primeiro laço") com parâmetros `{{max_palavras}}` (Instruções do Resumidor) e
   `{{max_barra}}` (barra do Revisor), padrões 240 na linha `Parâmetros:` do Objetivo. Reexportado
