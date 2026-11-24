@@ -1,12 +1,20 @@
-# HANDOFF — 2026-11-24 (sessão 11: parâmetros do grafo e evoluções da barra, só documentação)
+# HANDOFF — 2026-11-24 (sessão 11: parâmetros do grafo, evoluções da barra e tutorial 01; v2.1.0)
 
 ## Estado
-- **v2.0.0** (tag em `37d1f77`) segue publicada em https://joao-parana.github.io/graph-builder/ com
-  o modo nuvem ligado. Gate manual da L09 aprovado (item 6 repetido após o deploy da correção
-  `fix/l09-aviso-sem-convite`). Os três `package.json` estão em `2.0.0`.
+- **v2.2.0** Sendo publicada
+- **v2.1.0** (tag anotada em `404aecb`) publicada em https://joao-parana.github.io/graph-builder/
+  ("Deploy no GitHub Pages" ok em 2026-11-24 13:37). Só documentação e um teste: o app é o mesmo
+  da **v2.0.0** (`37d1f77`, gate manual da L09 aprovado), agora com o tutorial 01 em
+  `docs/tutorial/`. Os três `package.json` e o `bun.lock` estão em `2.1.0`. A tag não corresponde
+  a uma camada do SPEC §9.
 - **Roadmap:** v1 (L00–L06) e v2 (L07–L09) concluídas. Não há camada nova definida no SPEC §9.
-- **`develop`** em `c205954` (antes do merge deste HANDOFF), igual ao `origin/develop`. A `master`
-  não recebeu os commits desta sessão (só documentação; sem release).
+- **`v2.1.0`** em `404aecb`. Depois dela, a `master` recebeu `82efed6` (link para a seção 5 do
+  tutorial 01, editado pela web do GitHub), trazido para a `develop` com `merge master`.
+- Antes disso, **`develop`**, **`master`** e `v2.1.0` estavam em `404aecb`, iguais ao `origin`. O merge da versão
+  (`984e4b8`) foi feito com a `master` aberta (a mensagem do `404aecb` diz "into develop"); a
+  `develop` foi alinhada por fast-forward. Histórico mantido (já enviado e com tag).
+- Worktree de publicação `.claude/worktrees/graph-examples` (`feature/graph-examples`, em
+  `984e4b8`): manter para os próximos tutoriais; antes de usar, `merge --ff-only develop` nele.
 - **Produção:** projeto Supabase `graph-builder` (ref `oobsowknnhkwverrwgan`, us-east-2), migration
   `20261119124437_graphs.sql` aplicada, RLS ligada (`graphs_owner`), cadastro fechado
   (`disable_signup: true`), GitHub ligado com o OAuth App de produção. *Variables* do repositório:
@@ -100,8 +108,11 @@ um teste; nenhuma mudança de comportamento do app.
   conferem só pelo resumo. Primeiro candidato: tutorial 03 (fontes).
 
 ## Próximo passo
-- Tutoriais: rodar os gates no worktree da `feature/graph-examples`, merge na `develop` e depois
-  na `master` (o Pages publica). Em seguida, o tutorial 02 no laboratório.
+- Tutoriais: o 02 (Triagem com Decisão) no laboratório, no mesmo roteiro do 01; ao publicar,
+  acrescentar o item na lista `TUTORIALS` do `tutorial-examples.test.ts` e tirar o "(em
+  preparação)" da trilha no `docs/tutorial/index.md`. Estado e etapas em
+  `graph-examples/HANDOFF-L02.md`: o HANDOFF do laboratório agora é um índice (`HANDOFF.md`) e um
+  arquivo por tutorial (`HANDOFF-L01.md` … `HANDOFF-L06.md`).
 - Próxima rodada de implementação: uma camada **"Parâmetros e checagens da barra"** (SPEC §11),
   só se os tutoriais 02–06 também pedirem. Começa por um ADR (resolve a Q10) e pela proposta no
   SPEC (§2, §3, §6, §9), com `schemaVersion: 2` e migração v1→v2 (`parameters: []`, `checks: []`).

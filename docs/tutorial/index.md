@@ -35,7 +35,7 @@ Sem convite, use o modo **Neste navegador**: tudo nos tutoriais funciona igual.
 | # | Tutorial | O que ensina |
 |---|---|---|
 | 01 | [Primeiro laço](01-primeiro-laco.md) | Entrada → Trabalhador → Supervisor → Entrega; retorno implícito; a barra |
-| 02 | Triagem com Decisão *(em preparação)* | Decisão com fios de condição; Entrega que junta dois caminhos |
+| 02 | [Triagem com Decisão](02-triagem-com-decisao.md) | Decisão com fios de condição; Entrega que junta dois caminhos |
 | 03 | Pesquisa com Memória *(em preparação)* | Memória com relações; escrever e consultar |
 | 04 | Críticos em série *(em preparação)* | Supervisor → Supervisor; os quatro presets; "Se esgotar" |
 | 05 | Entrega julgada *(em preparação)* | Supervisor que julga uma Entrega; "fase seguinte" |

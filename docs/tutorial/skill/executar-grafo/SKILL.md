@@ -112,7 +112,10 @@ Guarde o **artefato** de cada peça pelo nome dela. A Entrada é o artefato da p
 
 Uma peça está **pronta** quando todas as peças de `Recebe de` (ou de `Junte:`) já têm artefato
 (aprovado, se passam por Supervisor) e, se ela tem `Consulta`, quando todas as peças que escrevem
-nessa Memória já rodaram. Rode em **ondas**:
+nessa Memória já rodaram. Peças **fora do caminho** (as que uma Decisão deixou de fora, ver
+"Decisão e Memória") não contam: uma Entrega que junta dois caminhos de uma Decisão fica pronta
+com as peças que chegaram. Se nenhuma peça de `Recebe de`/`Junte:` chegou, a peça também fica fora
+do caminho. Rode em **ondas**:
 
 1. Junte as peças prontas que ainda não rodaram. Essa é a onda.
 2. Chame os subagentes de **todos** os construtores da onda **na mesma mensagem** (vários tool
@@ -125,8 +128,10 @@ ordem em que as respostas chegaram.
 ### Construtor (Trabalhador e Entrega) em subagente
 
 1. Monte o **pacote do construtor** com o modelo abaixo. Ele leva só:
-   - as Instruções da peça, copiadas como estão (numa Entrega, também a linha `Junte:`);
-   - os artefatos das peças de `Recebe de` (ou de `Junte:`), um bloco por peça, com o nome dela;
+   - as Instruções da peça, copiadas como estão (numa Entrega, também a linha `Junte:`, só com
+     as peças que chegaram);
+   - os artefatos das peças de `Recebe de` (ou de `Junte:`) que chegaram, um bloco por peça, com o
+     nome dela. Peça fora do caminho não entra no pacote, nem como aviso;
    - a Memória, **só** se a peça tiver `Consulta`;
    - as relações permitidas, **só** se a peça tiver `Escreve em`;
    - na volta de um Supervisor (seção 4, passo 6): o artefato anterior e o parecer.
@@ -200,7 +205,8 @@ Memória:
 
 - **Decisão:** você mesmo escolhe **um** caminho (`- Se "…" → …`), olhando só os artefatos que
   chegam a ela, e registra qual e por quê. Só o destino escolhido segue; as etapas que só seriam
-  alcançadas pelos outros caminhos ficam de fora, e o log diz isso.
+  alcançadas pelos outros caminhos ficam **fora do caminho**: não rodam, e o log diz quais. Uma
+  peça alcançada também pelo caminho escolhido (ex.: a Entrega que junta os dois) continua.
 - **Memória:** mantenha uma lista de itens `{item} —{relação}→ {item}` só com as relações
   declaradas. Quem tem `Escreve em` acrescenta (pela resposta do construtor); quem tem `Consulta`
   recebe a lista no pacote. Anote as escritas no log.
@@ -334,9 +340,11 @@ Ondas: 1: {peças} · 2: {peças} · …
 ### Auditoria
 Isolamento: ok | vazou: … | marcador não resolvido: …
 Fora do bloco: nenhum | {resumo} | contesta {o quê}
+Junte: completo | {peça} fora (Decisão {nome})   ← só numa Entrega
 
 ## {n}. {Decisão} (Decisão)
 {caminho escolhido e por quê}
+Fora do caminho: {peças} (ou `nenhuma`)
 
 ## {n}. {Supervisor} — rodada {r} de {máx.}
 ### Gates
