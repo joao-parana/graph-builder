@@ -1,0 +1,80 @@
+{
+  "id": "214c6ceb-c0fd-4007-8117-e432dbd65146",
+  "schemaVersion": 1,
+  "name": "Primeiro laço",
+  "objective": "Entregar um resumo de até {{max_palavras}} palavras do texto colado, escrito para o público que o usuário nomear.\nParâmetros: max_palavras (padrão: 240), max_barra (padrão: 240).",
+  "nodes": [
+    {
+      "id": "9188b337-6efc-466a-a420-3c2fe79a0776",
+      "kind": "input",
+      "name": "Texto e público",
+      "instructions": "Cole aqui o texto a resumir. Na primeira linha, diga para quem é o resumo (ex.: \"Público: diretoria\").",
+      "position": {
+        "x": 48,
+        "y": 32
+      }
+    },
+    {
+      "id": "fc29d485-62e8-4454-a0fa-3690c5be6237",
+      "kind": "worker",
+      "name": "Resumidor",
+      "instructions": "Resuma o texto da Entrada em até {{max_palavras}} palavras para o público indicado na primeira linha.\nComece com \"Para: {público}\" e, na frase seguinte, diga a ideia principal.",
+      "position": {
+        "x": 64,
+        "y": 208
+      }
+    },
+    {
+      "id": "2cc9a812-a47c-4109-9469-b253a72e122d",
+      "kind": "supervisor",
+      "name": "Revisor",
+      "instructions": "Reprove se o resumo passar de {{max_barra}} palavras.\nReprove se a primeira frase depois de \"Para:\" não disser a ideia principal.\nO público-alvo está explícito no artefato.",
+      "position": {
+        "x": 336,
+        "y": 128
+      },
+      "presets": [
+        "explicit-audience"
+      ],
+      "maxRounds": 3,
+      "onExhausted": "deliver-best-with-caveats"
+    },
+    {
+      "id": "0ff8ffaa-eca0-4d31-9a18-9fd3bb72837c",
+      "kind": "delivery",
+      "name": "Resumo final",
+      "instructions": "Entregue o resumo aprovado, sem comentários.",
+      "position": {
+        "x": 576,
+        "y": 48
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "5663c79c-511d-4dd2-acd0-9c7fb10c7d5a",
+      "source": "9188b337-6efc-466a-a420-3c2fe79a0776",
+      "target": "fc29d485-62e8-4454-a0fa-3690c5be6237",
+      "kind": "flow"
+    },
+    {
+      "id": "f20f0f51-ea7d-45b2-b26d-355bcad7512b",
+      "source": "fc29d485-62e8-4454-a0fa-3690c5be6237",
+      "target": "2cc9a812-a47c-4109-9469-b253a72e122d",
+      "kind": "flow"
+    },
+    {
+      "id": "df28f53b-2361-4560-b1a4-7d5adca4f2f3",
+      "source": "2cc9a812-a47c-4109-9469-b253a72e122d",
+      "target": "0ff8ffaa-eca0-4d31-9a18-9fd3bb72837c",
+      "kind": "flow"
+    }
+  ],
+  "viewport": {
+    "x": 1.824844337839238,
+    "y": 3.7215764829267073,
+    "zoom": 0.9944701686732144
+  },
+  "createdAt": "2026-11-22T02:58:29.515Z",
+  "updatedAt": "2026-11-23T19:10:58.796Z"
+}

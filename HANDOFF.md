@@ -77,6 +77,18 @@ Ignorado por este repositório. Feito nesta sessão (commits manuais do usuário
 - `rascunhos/conferir.ts` (importa o core do checkout principal) passa nos 4 checks: "Abrir JSON",
   "Antes de exportar" limpo, formato canônico e prompt = `renderPrompt`.
 
+## Publicação do tutorial 01 (sessão 11, continuação; branch `feature/graph-examples`)
+Worktree `.claude/worktrees/graph-examples`, a partir da `develop` (`df84607`). Só documentação e
+um teste; nenhuma mudança de comportamento do app.
+- `docs/tutorial/`: `index.md` (onde rodar; **Entrar na nuvem**: pedir convite por e-mail a
+  joao.parana@gmail.com, com um e-mail verificado no GitHub; a trilha dos 6 tutoriais; exemplos;
+  rodar no Claude), `01-primeiro-laco.md`, `exemplos/` (JSON e Entrada de teste pública),
+  `skill/executar-grafo/SKILL.md` e `imagens/01-primeiro-laco.png`.
+- `packages/core/test/docs/tutorial-examples.test.ts`: para cada tutorial, "Abrir JSON" ok,
+  `validateGraph` vazio, JSON canônico e o bloco da seção 5 = `renderPrompt`. Lê os arquivos por
+  `?raw` (como o `SPEC.md` no `prompt-renderer.test.ts`); fora de `src/`, não muda a cobertura.
+- `README.md`: seção "Tutoriais" antes de "Exemplo de uso".
+
 ## Pendências
 - O e2e da nuvem roda só com o Supabase local no ar; sem ele, é pulado com aviso.
 - Cobertura de branches da UI: 88,23% (componentes `.svelte` cobertos pelo e2e).
@@ -88,24 +100,25 @@ Ignorado por este repositório. Feito nesta sessão (commits manuais do usuário
   conferem só pelo resumo. Primeiro candidato: tutorial 03 (fontes).
 
 ## Próximo passo
-- Tutoriais: fechar o tutorial 01 no laboratório e publicar em `docs/tutorial/` pela branch
-  `feature/graph-examples` (plano no `HANDOFF.md` do laboratório).
+- Tutoriais: rodar os gates no worktree da `feature/graph-examples`, merge na `develop` e depois
+  na `master` (o Pages publica). Em seguida, o tutorial 02 no laboratório.
 - Próxima rodada de implementação: uma camada **"Parâmetros e checagens da barra"** (SPEC §11),
   só se os tutoriais 02–06 também pedirem. Começa por um ADR (resolve a Q10) e pela proposta no
   SPEC (§2, §3, §6, §9), com `schemaVersion: 2` e migração v1→v2 (`parameters: []`, `checks: []`).
   Plano toca mais de 3 arquivos: listar e esperar o OK.
 
 ## Gates
-Não rodados nesta sessão: só `SPEC.md`, `README.md` e `HANDOFF.md` mudaram (nenhum código). Última rodada
-(2026-11-22, `fix/l09-aviso-sem-convite`, Supabase local no ar):
+Rodados em 2026-11-24 no worktree `feature/graph-examples` (publicação do tutorial 01, Supabase
+local no ar):
 ```
 @graph-builder/core typecheck: Exited with code 0
-ui typecheck: COMPLETED 675 FILES 0 ERRORS 0 WARNINGS 0 FILES_WITH_PROBLEMS
+ui typecheck: svelte-check found 0 errors and 0 warnings
 @graph-builder/core lint: Exited with code 0
 ui lint: Exited with code 0
-@graph-builder/core test:       Tests  285 passed (285)
-@graph-builder/core test: Branches     : 97.89% ( 464/474 )
+@graph-builder/core test:  ✓ test/docs/tutorial-examples.test.ts (4 tests)
+@graph-builder/core test:       Tests  289 passed (289)
+@graph-builder/core test: Branches     : 97.89%
 ui test:       Tests  135 passed (135)
-ui test: Branches     : 88.23% ( 300/340 )
-ui e2e:   78 passed (1.1m)
+ui test: Branches     : 88.23%
+ui e2e:   78 passed (38.0s)
 ```
