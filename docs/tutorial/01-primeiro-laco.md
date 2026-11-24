@@ -27,7 +27,7 @@ O tutorial funciona igual nos dois modos.
 #### Atalho importando um Grafo já existente
 
 Se desejar um atalho pulando a parte de edição do grafo de exemplo, baixe [`exemplos/01-primeiro-laco.json`](exemplos/01-primeiro-laco.json), carregue-o usando
-**Abrir JSON** e pule para a seção 5.
+**Abrir JSON** e pule para a [seção 5](#5-o-prompt-exportado).
 
 ## 2. O grafo
 
