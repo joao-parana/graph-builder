@@ -7,7 +7,9 @@
   `docs/tutorial/`. Os três `package.json` e o `bun.lock` estão em `2.1.0`. A tag não corresponde
   a uma camada do SPEC §9.
 - **Roadmap:** v1 (L00–L06) e v2 (L07–L09) concluídas. Não há camada nova definida no SPEC §9.
-- **`develop`**, **`master`** e `v2.1.0` em `404aecb`, iguais ao `origin`. O merge da versão
+- **`v2.1.0`** em `404aecb`. Depois dela, a `master` recebeu `82efed6` (link para a seção 5 do
+  tutorial 01, editado pela web do GitHub), trazido para a `develop` com `merge master`.
+- Antes disso, **`develop`**, **`master`** e `v2.1.0` estavam em `404aecb`, iguais ao `origin`. O merge da versão
   (`984e4b8`) foi feito com a `master` aberta (a mensagem do `404aecb` diz "into develop"); a
   `develop` foi alinhada por fast-forward. Histórico mantido (já enviado e com tag).
 - Worktree de publicação `.claude/worktrees/graph-examples` (`feature/graph-examples`, em
@@ -107,7 +109,9 @@ um teste; nenhuma mudança de comportamento do app.
 ## Próximo passo
 - Tutoriais: o 02 (Triagem com Decisão) no laboratório, no mesmo roteiro do 01; ao publicar,
   acrescentar o item na lista `TUTORIALS` do `tutorial-examples.test.ts` e tirar o "(em
-  preparação)" da trilha no `docs/tutorial/index.md`.
+  preparação)" da trilha no `docs/tutorial/index.md`. Estado e etapas em
+  `graph-examples/HANDOFF-L02.md`: o HANDOFF do laboratório agora é um índice (`HANDOFF.md`) e um
+  arquivo por tutorial (`HANDOFF-L01.md` … `HANDOFF-L06.md`).
 - Próxima rodada de implementação: uma camada **"Parâmetros e checagens da barra"** (SPEC §11),
   só se os tutoriais 02–06 também pedirem. Começa por um ADR (resolve a Q10) e pela proposta no
   SPEC (§2, §3, §6, §9), com `schemaVersion: 2` e migração v1→v2 (`parameters: []`, `checks: []`).
