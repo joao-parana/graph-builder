@@ -1,6 +1,7 @@
 # HANDOFF — 2026-11-24 (sessão 11: parâmetros do grafo, evoluções da barra e tutorial 01; v2.1.0)
 
 ## Estado
+- **v2.2.0** Sendo publicada
 - **v2.1.0** (tag anotada em `404aecb`) publicada em https://joao-parana.github.io/graph-builder/
   ("Deploy no GitHub Pages" ok em 2026-11-24 13:37). Só documentação e um teste: o app é o mesmo
   da **v2.0.0** (`37d1f77`, gate manual da L09 aprovado), agora com o tutorial 01 em

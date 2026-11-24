@@ -1,0 +1,99 @@
+{
+  "id": "c17c2bb5-efdb-4a96-8f10-4c59b906059d",
+  "schemaVersion": 1,
+  "name": "Triagem com Decisão",
+  "objective": "Classificar um relato de usuário como bug ou pedido de recurso e entregar o registro no formato certo para a equipe.",
+  "nodes": [
+    {
+      "id": "b0fbfddd-f368-4688-b8bc-b33e30194b35",
+      "kind": "input",
+      "name": "Relato",
+      "instructions": "Cole aqui o relato do usuário, como chegou (e-mail, chamado ou mensagem).",
+      "position": {
+        "x": 39,
+        "y": 24
+      }
+    },
+    {
+      "id": "18defb4d-418a-4692-8faa-7024443a09c7",
+      "kind": "decision",
+      "name": "Triagem",
+      "instructions": "Leia o relato e escolha UM caminho pelo que ele pede.",
+      "position": {
+        "x": 115,
+        "y": 204
+      }
+    },
+    {
+      "id": "be37d13a-1bca-448f-98ff-53c2a999c76d",
+      "kind": "worker",
+      "name": "Registro de bug",
+      "instructions": "Escreva um registro de bug a partir do relato, com as seções: Título, Passos para reproduzir, Resultado esperado, Resultado obtido.\nComece com \"Tipo: bug\". Se o relato não disser algo, escreva \"não informado\"; não invente.",
+      "position": {
+        "x": 390,
+        "y": 48
+      }
+    },
+    {
+      "id": "88321e16-fd64-4994-927e-d2e2069b117a",
+      "kind": "delivery",
+      "name": "Registro final",
+      "instructions": "Copie o registro recebido exatamente como veio, sem acrescentar título, cabeçalho nem comentários.",
+      "position": {
+        "x": 676,
+        "y": 212
+      }
+    },
+    {
+      "id": "15c5f7cd-b060-4c43-87a9-ea4407c3d439",
+      "kind": "worker",
+      "name": "Pedido de recurso",
+      "instructions": "Escreva um pedido de recurso a partir do relato, com as seções: Título, Quem pede, Problema, Proposta.\nComece com \"Tipo: pedido de recurso\". Se o relato não disser algo, escreva \"não informado\"; não invente.",
+      "position": {
+        "x": 384,
+        "y": 369
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "46fffcb3-b667-4c70-ae1c-f2abe3a5f1c0",
+      "source": "b0fbfddd-f368-4688-b8bc-b33e30194b35",
+      "target": "18defb4d-418a-4692-8faa-7024443a09c7",
+      "kind": "flow"
+    },
+    {
+      "id": "70f703dc-5081-46e5-8201-bad71979e2e3",
+      "source": "18defb4d-418a-4692-8faa-7024443a09c7",
+      "target": "be37d13a-1bca-448f-98ff-53c2a999c76d",
+      "kind": "condition",
+      "condition": "o relato descreve algo que dá erro ou parou de funcionar"
+    },
+    {
+      "id": "3a62d5bf-4ec4-49bc-90ed-e644fb3775b9",
+      "source": "18defb4d-418a-4692-8faa-7024443a09c7",
+      "target": "15c5f7cd-b060-4c43-87a9-ea4407c3d439",
+      "kind": "condition",
+      "condition": "o relato pede algo que o produto ainda não faz"
+    },
+    {
+      "id": "1850b5e7-12c3-4233-9a42-c9d65c1bceba",
+      "source": "15c5f7cd-b060-4c43-87a9-ea4407c3d439",
+      "target": "88321e16-fd64-4994-927e-d2e2069b117a",
+      "kind": "flow"
+    },
+    {
+      "id": "ab9a967f-5f39-4800-a487-98be2f3bb473",
+      "source": "be37d13a-1bca-448f-98ff-53c2a999c76d",
+      "target": "88321e16-fd64-4994-927e-d2e2069b117a",
+      "kind": "flow"
+    }
+  ],
+  "viewport": {
+    "x": 0,
+    "y": 0,
+    "zoom": 1
+  },
+  "createdAt": "2026-11-24T12:30:36.447Z",
+  "updatedAt": "2026-11-24T20:07:53.850Z"
+}
