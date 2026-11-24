@@ -1,12 +1,16 @@
-# HANDOFF — 2026-11-24 (sessão 11: parâmetros do grafo, evoluções da barra e tutorial 01; v2.1.0)
+# HANDOFF — 2026-11-24 (sessão 11: parâmetros do grafo, evoluções da barra e tutoriais 01 e 02; v2.2.0)
 
 ## Estado
-- **v2.2.0** Sendo publicada
+- **v2.2.0** (tag anotada em `8852a43`, enviada ao `origin`) com o tutorial 02 (Triagem com
+  Decisão) em `docs/tutorial/`. `master` em `8852a43` e `develop` em `d654504`, iguais ao `origin`.
+  Só documentação e um teste: o app é o mesmo da v2.0.0. Os três `package.json` e o `bun.lock`
+  estão em `2.2.0`. A tag não corresponde a uma camada do SPEC §9. Conferir o "Deploy no GitHub
+  Pages" da `master`.
+- O commit do tutorial 02 caiu primeiro na `master` local (`309e7c7`: o worktree
+  `graph-examples` estava na `master`); foi levado à feature por `cherry-pick` (`fbcb4da`) e a
+  `master` voltou ao `origin/master` antes do merge. Nada disso chegou ao `origin`.
 - **v2.1.0** (tag anotada em `404aecb`) publicada em https://joao-parana.github.io/graph-builder/
-  ("Deploy no GitHub Pages" ok em 2026-11-24 13:37). Só documentação e um teste: o app é o mesmo
-  da **v2.0.0** (`37d1f77`, gate manual da L09 aprovado), agora com o tutorial 01 em
-  `docs/tutorial/`. Os três `package.json` e o `bun.lock` estão em `2.1.0`. A tag não corresponde
-  a uma camada do SPEC §9.
+  ("Deploy no GitHub Pages" ok em 2026-11-24 13:37), com o tutorial 01.
 - **Roadmap:** v1 (L00–L06) e v2 (L07–L09) concluídas. Não há camada nova definida no SPEC §9.
 - **`v2.1.0`** em `404aecb`. Depois dela, a `master` recebeu `82efed6` (link para a seção 5 do
   tutorial 01, editado pela web do GitHub), trazido para a `develop` com `merge master`.
@@ -14,7 +18,8 @@
   (`984e4b8`) foi feito com a `master` aberta (a mensagem do `404aecb` diz "into develop"); a
   `develop` foi alinhada por fast-forward. Histórico mantido (já enviado e com tag).
 - Worktree de publicação `.claude/worktrees/graph-examples` (`feature/graph-examples`, em
-  `984e4b8`): manter para os próximos tutoriais; antes de usar, `merge --ff-only develop` nele.
+  `fbcb4da`): manter para os próximos tutoriais; antes de usar, `merge --ff-only develop` nele.
+  Commitar sempre com a `feature/graph-examples` aberta nele (nunca a `master`).
 - **Produção:** projeto Supabase `graph-builder` (ref `oobsowknnhkwverrwgan`, us-east-2), migration
   `20261119124437_graphs.sql` aplicada, RLS ligada (`graphs_owner`), cadastro fechado
   (`disable_signup: true`), GitHub ligado com o OAuth App de produção. *Variables* do repositório:
@@ -97,6 +102,17 @@ um teste; nenhuma mudança de comportamento do app.
   `?raw` (como o `SPEC.md` no `prompt-renderer.test.ts`); fora de `src/`, não muda a cobertura.
 - `README.md`: seção "Tutoriais" antes de "Exemplo de uso".
 
+## Publicação do tutorial 02 (sessão 11, continuação; branch `feature/graph-examples`, `fbcb4da`)
+A partir do laboratório `graph-examples` na `master` em `10ea136` (estado em
+`graph-examples/HANDOFF-L02.md`). Só documentação e um teste.
+- `docs/tutorial/02-triagem-com-decisao.md` (rascunho sem o comentário de laboratório do topo),
+  `exemplos/02-triagem-com-decisao.json`, `exemplos/02-relato-{bug,recurso,ambiguo}.md` e
+  `imagens/02-triagem-com-decisao.png`.
+- `docs/tutorial/skill/executar-grafo/SKILL.md` recopiada do laboratório (mudou desde a v2.1.0:
+  construtores isolados, gates por script, `?` reprova, peças fora do caminho).
+- `docs/tutorial/index.md`: o 02 na trilha com link, sem "(em preparação)".
+- `tutorial-examples.test.ts`: o 02 na lista `TUTORIALS` (8 testes).
+
 ## Pendências
 - O e2e da nuvem roda só com o Supabase local no ar; sem ele, é pulado com aviso.
 - Cobertura de branches da UI: 88,23% (componentes `.svelte` cobertos pelo e2e).
@@ -108,17 +124,19 @@ um teste; nenhuma mudança de comportamento do app.
   conferem só pelo resumo. Primeiro candidato: tutorial 03 (fontes).
 
 ## Próximo passo
-- Tutoriais: o 02 (Triagem com Decisão) no laboratório, no mesmo roteiro do 01; ao publicar,
-  acrescentar o item na lista `TUTORIALS` do `tutorial-examples.test.ts` e tirar o "(em
+- Tutoriais: o 03 (Pesquisa com Memória) no laboratório, no mesmo roteiro do 01 e do 02; ao
+  publicar, acrescentar o item na lista `TUTORIALS` do `tutorial-examples.test.ts` e tirar o "(em
   preparação)" da trilha no `docs/tutorial/index.md`. Estado e etapas em
-  `graph-examples/HANDOFF-L02.md`: o HANDOFF do laboratório agora é um índice (`HANDOFF.md`) e um
-  arquivo por tutorial (`HANDOFF-L01.md` … `HANDOFF-L06.md`).
+  `graph-examples/HANDOFF-L03.md` (o HANDOFF do laboratório é um índice e um arquivo por tutorial).
 - Próxima rodada de implementação: uma camada **"Parâmetros e checagens da barra"** (SPEC §11),
   só se os tutoriais 02–06 também pedirem. Começa por um ADR (resolve a Q10) e pela proposta no
   SPEC (§2, §3, §6, §9), com `schemaVersion: 2` e migração v1→v2 (`parameters: []`, `checks: []`).
   Plano toca mais de 3 arquivos: listar e esperar o OK.
 
 ## Gates
+Publicação do tutorial 02 (v2.2.0): colar aqui a saída de `/tmp/gates.txt`. Só o
+`tutorial-examples.test.ts` foi conferido na sessão (8 passed).
+
 Rodados em 2026-11-24 no worktree `feature/graph-examples` (publicação do tutorial 01, Supabase
 local no ar):
 ```
