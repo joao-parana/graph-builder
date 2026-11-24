@@ -1,12 +1,13 @@
-# HANDOFF — 2026-11-23 (sessão 11: parâmetros do grafo, só documentação)
+# HANDOFF — 2026-11-23 (sessão 11: parâmetros do grafo e evoluções da barra, só documentação)
 
 ## Estado
 - **v2.0.0** (tag em `37d1f77`) segue publicada em https://joao-parana.github.io/graph-builder/ com
   o modo nuvem ligado. Gate manual da L09 aprovado (item 6 repetido após o deploy da correção
   `fix/l09-aviso-sem-convite`). Os três `package.json` estão em `2.0.0`.
 - **Roadmap:** v1 (L00–L06) e v2 (L07–L09) concluídas. Não há camada nova definida no SPEC §9.
-- **`develop`** em `89db497`, igual ao `origin/develop`. A `master` não recebeu os commits desta
-  sessão (só documentação; sem release).
+- **`develop`** em `7478214`, igual ao `origin/develop`, antes do merge da branch
+  `docs/spec-evolucoes-da-barra`. A `master` não recebeu os commits desta sessão (só documentação;
+  sem release).
 - **Produção:** projeto Supabase `graph-builder` (ref `oobsowknnhkwverrwgan`, us-east-2), migration
   `20261119124437_graphs.sql` aplicada, RLS ligada (`graphs_owner`), cadastro fechado
   (`disable_signup: true`), GitHub ligado com o OAuth App de produção. *Variables* do repositório:
@@ -23,6 +24,22 @@ Nenhuma mudança de comportamento do app. Branch `docs/spec-parametros-do-grafo`
   `schemaVersion: 2` com migração v1→v2 no codec e no IndexedDB. Pede camada própria com ADR.
 - `README.md`, "Exemplo de uso": subseção **"Enviar um grafo a um colega"** (`a567293`): Duplicar em
   "Meus grafos" → renomear → "Exportar para a IA" → aba JSON. O colega importa com "Abrir JSON".
+
+Branch `docs/spec-evolucoes-da-barra` (saiu da `develop` em `7478214`), a partir da análise da skill
+`engenharia-de-grafos` (majinmagros/magros.ai-skills):
+- `SPEC.md` §11, três itens novos depois de "Parâmetros do grafo":
+  - **Checagens por regra na barra:** `SupervisorNode.checks: BarCheck[]` (`max-words`,
+    `min-words`, `max-chars`, `starts-with`; valor número, texto ou `{{nome}}`), INV-11, VAL-13,
+    VAL-14, bloco no inspetor, linha `Checagens por regra:` no prompt. Entra na mesma camada e na
+    mesma migração (`schemaVersion: 2`) dos Parâmetros.
+  - **Supervisor por nota** (`scoreMin`, `candidates`): só se os tutoriais 04/05 pedirem.
+  - **Aprovação humana explícita:** só registro (peça nova, custo alto).
+- `SPEC.md` §12: **Q10** (aberta), formato dos marcadores e das checagens no prompt, a decidir no
+  ADR da camada.
+- Já funciona hoje, sem o app: a skill `/executar-grafo` do laboratório roda Trabalhadores e
+  Entregas em subagentes isolados (em ondas paralelas) e confere por script as linhas mensuráveis
+  da barra antes do crítico. Testada na execução `2026-11-23-2003-primeiro-laco` (gate reprovou a
+  r1 com 171 palavras sem chamar o crítico; a r2 passou com 106).
 
 Confirmado no código durante a sessão:
 - "Abrir JSON" sempre gera um `id` novo para o grafo (`importJson`, `application/io.ts`): nunca
@@ -57,8 +74,10 @@ Ignorado por este repositório. Feito nesta sessão (commits manuais do usuário
 ## Próximo passo
 - Tutoriais: fechar o tutorial 01 no laboratório e publicar em `docs/tutorial/` pela branch
   `feature/graph-examples` (plano no `HANDOFF.md` do laboratório).
-- Parâmetros declarados no grafo (SPEC §11): só se os tutoriais 02–06 também pedirem parâmetros.
-  Começa pela proposta no SPEC (§2, §3, §6, §9, Q10 em §12) e por um ADR, numa camada própria.
+- Próxima rodada de implementação: uma camada **"Parâmetros e checagens da barra"** (SPEC §11),
+  só se os tutoriais 02–06 também pedirem. Começa por um ADR (resolve a Q10) e pela proposta no
+  SPEC (§2, §3, §6, §9), com `schemaVersion: 2` e migração v1→v2 (`parameters: []`, `checks: []`).
+  Plano toca mais de 3 arquivos: listar e esperar o OK.
 
 ## Gates
 Não rodados nesta sessão: só `SPEC.md`, `README.md` e `HANDOFF.md` mudaram. Última rodada
