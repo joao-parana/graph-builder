@@ -1,13 +1,12 @@
-# HANDOFF — 2026-11-23 (sessão 11: parâmetros do grafo e evoluções da barra, só documentação)
+# HANDOFF — 2026-11-24 (sessão 11: parâmetros do grafo e evoluções da barra, só documentação)
 
 ## Estado
 - **v2.0.0** (tag em `37d1f77`) segue publicada em https://joao-parana.github.io/graph-builder/ com
   o modo nuvem ligado. Gate manual da L09 aprovado (item 6 repetido após o deploy da correção
   `fix/l09-aviso-sem-convite`). Os três `package.json` estão em `2.0.0`.
 - **Roadmap:** v1 (L00–L06) e v2 (L07–L09) concluídas. Não há camada nova definida no SPEC §9.
-- **`develop`** em `7478214`, igual ao `origin/develop`, antes do merge da branch
-  `docs/spec-evolucoes-da-barra`. A `master` não recebeu os commits desta sessão (só documentação;
-  sem release).
+- **`develop`** em `c205954` (antes do merge deste HANDOFF), igual ao `origin/develop`. A `master`
+  não recebeu os commits desta sessão (só documentação; sem release).
 - **Produção:** projeto Supabase `graph-builder` (ref `oobsowknnhkwverrwgan`, us-east-2), migration
   `20261119124437_graphs.sql` aplicada, RLS ligada (`graphs_owner`), cadastro fechado
   (`disable_signup: true`), GitHub ligado com o OAuth App de produção. *Variables* do repositório:
@@ -25,7 +24,7 @@ Nenhuma mudança de comportamento do app. Branch `docs/spec-parametros-do-grafo`
 - `README.md`, "Exemplo de uso": subseção **"Enviar um grafo a um colega"** (`a567293`): Duplicar em
   "Meus grafos" → renomear → "Exportar para a IA" → aba JSON. O colega importa com "Abrir JSON".
 
-Branch `docs/spec-evolucoes-da-barra` (saiu da `develop` em `7478214`), a partir da análise da skill
+Branch `docs/spec-evolucoes-da-barra` (`6f2bf54`, merge `b650a64`), a partir da análise da skill
 `engenharia-de-grafos` (majinmagros/magros.ai-skills):
 - `SPEC.md` §11, três itens novos depois de "Parâmetros do grafo":
   - **Checagens por regra na barra:** `SupervisorNode.checks: BarCheck[]` (`max-words`,
@@ -36,10 +35,11 @@ Branch `docs/spec-evolucoes-da-barra` (saiu da `develop` em `7478214`), a partir
   - **Aprovação humana explícita:** só registro (peça nova, custo alto).
 - `SPEC.md` §12: **Q10** (aberta), formato dos marcadores e das checagens no prompt, a decidir no
   ADR da camada.
-- Já funciona hoje, sem o app: a skill `/executar-grafo` do laboratório roda Trabalhadores e
-  Entregas em subagentes isolados (em ondas paralelas) e confere por script as linhas mensuráveis
-  da barra antes do crítico. Testada na execução `2026-11-23-2003-primeiro-laco` (gate reprovou a
-  r1 com 171 palavras sem chamar o crítico; a r2 passou com 106).
+- Já funciona hoje, sem o app: a skill `/executar-grafo` do laboratório (ver abaixo).
+
+Branch `docs/handoff-laboratorio-master` (`4413299`, merge `c205954`): o laboratório trocou a
+branch `main` por `master` (padrão do usuário) e ganhou remoto `origin`
+(`github.com/joao-parana/graph-examples`).
 
 Confirmado no código durante a sessão:
 - "Abrir JSON" sempre gera um `id` novo para o grafo (`importJson`, `application/io.ts`): nunca
@@ -55,8 +55,22 @@ Ignorado por este repositório. Feito nesta sessão (commits manuais do usuário
   pelo app: `graphId` novo `214c6ceb-…` (as execuções antigas citam `f3e6830a-…`).
 - Skill `/executar-grafo <prompt.md> [entrada] [nome=valor …]`: passo "0. Resolver parâmetros"
   (argumento → padrão → pergunta), `parametros.md` e linha `Parâmetros:` no `rodadas.md`, auditoria
-  sem `{{` no pacote do crítico. Já rodada com reprovação e recuperação (`max_palavras=200
-  max_barra=120`).
+  sem `{{` no pacote do crítico. Depois, com ideias da skill `engenharia-de-grafos`:
+  - **Construtores isolados em ondas** (`403dfbf`): Trabalhador e Entrega rodam cada um num
+    subagente novo, sem ver a barra, o Objetivo nem as Instruções de outras peças (auditoria
+    `Isolamento`); peças independentes rodam em paralelo.
+  - **Gates por script** (`403dfbf`): linhas mensuráveis da barra (lista fechada: palavras,
+    caracteres, prefixo) são conferidas antes do crítico; gate ✗ reprova sem chamar o crítico, e o
+    crítico recebe só as linhas que não são gate. Resolve o "cerca de" na contagem do crítico.
+  - **"Não verificado não é aprovado"** (`142856c`, ajuste em `681873c`): o crítico marca ✓, ✗ ou
+    `?`; `?` reprova. No "Se esgotar", as `Ressalvas` têm **Não cumpre** e **Não verificado**
+    (inclui linhas que o crítico não julgou, `crítico não chamado`).
+  - **Texto fora do bloco do construtor** (`681873c`): é registrado e auditado, mas não segue
+    adiante nem muda o grafo; só o usuário decide.
+- Execuções do grafo 01 com a skill nova: `2026-11-23-2003` (`max_palavras=200 max_barra=120`):
+  gate reprovou a r1 (171 palavras) sem crítico, r2 aprovada (106); `2026-11-23-2132`
+  (`max_barra=5`): 3 reprovações por gate e entrega com `Ressalvas` (1 Não cumpre, 2 Não
+  verificado).
 - Rascunho do tutorial 01, desenho, README e HANDOFF do laboratório alinhados ao grafo novo.
 - Análise das alternativas e do impacto da evolução no app:
   `graph-examples/anotacoes/parametros-do-grafo.md`.
@@ -70,6 +84,8 @@ Ignorado por este repositório. Feito nesta sessão (commits manuais do usuário
 - Nunca usar `supabase config push` (levaria a config local, com `127.0.0.1`, para a produção).
 - A branch `claude/graph-parameters-example-91291a` (do worktree desta sessão) ficou sem uso: pode
   ser apagada com o worktree.
+- O estado `?` da skill ainda não apareceu numa execução real: no grafo 01 as linhas do crítico se
+  conferem só pelo resumo. Primeiro candidato: tutorial 03 (fontes).
 
 ## Próximo passo
 - Tutoriais: fechar o tutorial 01 no laboratório e publicar em `docs/tutorial/` pela branch
@@ -80,7 +96,7 @@ Ignorado por este repositório. Feito nesta sessão (commits manuais do usuário
   Plano toca mais de 3 arquivos: listar e esperar o OK.
 
 ## Gates
-Não rodados nesta sessão: só `SPEC.md`, `README.md` e `HANDOFF.md` mudaram. Última rodada
+Não rodados nesta sessão: só `SPEC.md`, `README.md` e `HANDOFF.md` mudaram (nenhum código). Última rodada
 (2026-11-22, `fix/l09-aviso-sem-convite`, Supabase local no ar):
 ```
 @graph-builder/core typecheck: Exited with code 0
