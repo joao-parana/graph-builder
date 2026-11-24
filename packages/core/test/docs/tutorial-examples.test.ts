@@ -3,12 +3,17 @@
 import { describe, expect, it } from 'vitest';
 import tutorial01 from '../../../../docs/tutorial/01-primeiro-laco.md?raw';
 import example01 from '../../../../docs/tutorial/exemplos/01-primeiro-laco.json?raw';
+import tutorial02 from '../../../../docs/tutorial/02-triagem-com-decisao.md?raw';
+import example02 from '../../../../docs/tutorial/exemplos/02-triagem-com-decisao.json?raw';
 import { importJson } from '../../src/application/index.ts';
 import { validateGraph } from '../../src/domain/index.ts';
 import { jsonGraphCodec } from '../../src/infrastructure/json-codec.ts';
 import { renderPrompt } from '../../src/infrastructure/prompt-renderer.ts';
 
-const TUTORIALS: readonly [string, string, string][] = [['01-primeiro-laco', example01, tutorial01]];
+const TUTORIALS: readonly [string, string, string][] = [
+  ['01-primeiro-laco', example01, tutorial01],
+  ['02-triagem-com-decisao', example02, tutorial02],
+];
 
 /** O bloco ````markdown da seção "5. O prompt exportado". */
 function promptBlock(markdown: string): string {
