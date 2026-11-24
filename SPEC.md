@@ -829,6 +829,47 @@ O resultado vai para o `HANDOFF.md` antes da tag `v2.0.0`.
 - Sub-grafo: Entrega de um grafo alimentando outro ("fase seguinte").
 - Depois da v2 (ADR-0004): compartilhar grafos entre usuários, sincronização automática entre os
   modos, papéis (admin/usuário).
+- **Parâmetros do grafo.** *Hoje, sem mudar o app (convenção):* um valor que muda a cada execução
+  vira um marcador `{{nome}}` (chaves duplas, `nome` em `[a-z][a-z0-9_]*`) no Objetivo, nas
+  Instruções ou na barra, com os padrões numa linha do Objetivo (`Parâmetros: max_palavras (padrão:
+  120).`). O renderer copia o texto como está (§6, regra 1), e quem executa troca os marcadores
+  pelos valores antes de montar o pacote do crítico, para a barra chegar resolvida ao Supervisor
+  sem quebrar a cegueira. Chave simples (`{público}`) segue como texto literal. *Evolução:*
+  `Graph.parameters` (`name`, `description`, `defaultValue`); INV-10 (nome válido e único,
+  case-insensitive); VAL-11 (erro: marcador sem declaração) e VAL-12 (alerta: parâmetro sem uso);
+  seção `## Parâmetros` no prompt, depois de `## Objetivo`, só quando houver (o renderer não
+  resolve valores: o prompt segue função só do grafo, §6 regra 1); `schemaVersion: 2`, com migração
+  v1→v2 (`parameters: []`) no codec e na leitura do IndexedDB (a nuvem passa pelo codec; `data`
+  é `jsonb`, sem migration SQL). Pede camada própria, com ADR (sintaxe do marcador e primeira
+  migração de schema). Análise das alternativas e do impacto por arquivo:
+  `graph-examples/anotacoes/parametros-do-grafo.md` (laboratório dos tutoriais, repositório
+  próprio, fora deste).
+- **Checagens por regra na barra** (gates determinísticos). *Hoje, sem mudar o app (convenção):*
+  a skill `/executar-grafo` do laboratório reconhece, numa lista fechada, as linhas da barra
+  mensuráveis (`Reprove se … passar de N palavras`, `… tiver menos de N palavras`, `… passar de N
+  caracteres`, `… não começar com "texto"`) e as confere por script **antes** do crítico. Um gate
+  reprovado devolve o artefato com um parecer gerado pelo script, sem chamar o crítico; o crítico
+  recebe só as linhas que não são gate e nunca o resultado delas (a cegueira se mantém). Testado
+  no tutorial 01: o crítico estimava a contagem ("cerca de 238"), o script conta exato.
+  *Evolução:* `SupervisorNode.checks: BarCheck[]`, com `BarCheck = { kind: 'max-words' |
+  'min-words' | 'max-chars' | 'starts-with'; value: string }` (`value` é número, texto ou um
+  marcador `{{nome}}` dos Parâmetros do grafo); INV-11 (`value` numérico inteiro ≥ 1 nos três
+  primeiros tipos, não vazio em `starts-with`, ou um marcador válido); VAL-13 (erro: checagem com
+  marcador sem parâmetro declarado) e VAL-14 (alerta: duas checagens do mesmo tipo no mesmo
+  Supervisor); no inspetor, um bloco "Checagens por regra" abaixo da barra, com tipo e valor; no
+  prompt, uma linha `Checagens por regra:` no bloco do Supervisor, depois de `A barra:`, uma
+  checagem por item, no texto canônico que o executor reconhece sem adivinhar (Q10); `Como
+  executar` ganha uma frase: as checagens rodam por script antes do crítico e não vão para o
+  pacote dele. Muda o schema: entra na mesma camada e na mesma migração (`schemaVersion: 2`) dos
+  Parâmetros do grafo (`checks: []` na migração v1→v2).
+- **Supervisor por nota.** Hoje a barra é binária (aprovado/reprovado). *Evolução:* modo opcional
+  em que o crítico dá uma nota 0–100 e aprova com `scoreMin`; e `candidates` (1..5, padrão 1): o
+  construtor gera N versões por rodada e o crítico, sem saber qual veio de qual rodada, ranqueia e
+  fica a melhor. Muda `SupervisorNode`, o template §6 e o schema. Só se os tutoriais 04 (críticos
+  em série) ou 05 (Entrega julgada) mostrarem a necessidade.
+- **Aprovação humana explícita.** Uma peça (ou marcação no Supervisor) de "pausa: o usuário aprova
+  antes de seguir", que o prompt traduz como "pare e pergunte". É peça nova (§3, §6, VAL, paleta):
+  custo alto, fica só como registro.
 
 ---
 
@@ -845,3 +886,4 @@ O resultado vai para o `HANDOFF.md` antes da tag `v2.0.0`.
 | Q8 | Onde o navegador lembra o último modo (FR-53)? | **Resolvida:** `localStorage`, chave `graph-builder:mode`, valor `local` ou `cloud`; gravado a cada troca de modo. Ao iniciar: `cloud` com sessão válida → nuvem; qualquer outro caso (sem sessão, valor ausente ou inválido, storage bloqueado) → local. É preferência do navegador, não vai para a nuvem | L08 |
 | Q9 | Como o e2e entra na nuvem, se o GitHub OAuth não é automatizável? | **Resolvida:** o e2e da nuvem roda contra o Supabase local, com o build feito com as variáveis do `supabase status` (§9.3). Cada teste cria um usuário pela API admin (*service role key* local, só no processo do Playwright), entra com senha pelo `supabase-js` no Node e injeta a sessão no `localStorage` do navegador (`addInitScript`, na chave padrão do `supabase-js`) antes de abrir o app; apaga o usuário no fim. O botão "Entrar com GitHub" é conferido só até o pedido a `/auth/v1/authorize?provider=github` (interceptado com `page.route`, sem ir ao GitHub). Sem o Supabase local, esses testes são pulados com aviso | L08 |
 | Q6 | Presets extras além de "Resultado WOW" e "Sem erros" | **Resolvida:** os 4 presets do FR-12, com ids e textos definidos (o `ToggleBarPreset` da L02 precisa deles) | L05 |
+| Q10 | Formato dos Parâmetros e das Checagens por regra no prompt (§11) | **Aberta.** Proposta: marcador `{{nome}}` (chaves duplas; chave simples segue literal) e, por checagem, o mesmo texto que a skill do laboratório já reconhece (`Reprove se passar de N palavras.` etc.), para os prompts exportados hoje e os da v2 rodarem igual. Decidir no ADR da camada | camada dos Parâmetros do grafo |
