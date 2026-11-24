@@ -334,6 +334,11 @@ build é só local (v1). Configuração feita uma vez, à mão (SPEC §9.5):
   porta). Trocar de domínio começa com a lista vazia; use **Exportar → JSON** e **Abrir JSON**
   para levar grafos de um lugar para outro.
 
+## Tutoriais
+
+Seis grafos, do menor laço ao pipeline completo, com o JSON pronto para "Abrir JSON" e o que
+observar ao rodar no Claude: [`docs/tutorial/`](docs/tutorial/index.md).
+
 ## Exemplo de uso
 
 1. Abra o app. Ele retoma o grafo mais recente (ou cria "Meu grafo") e salva sozinho a cada
